@@ -6,7 +6,7 @@ import { Menu, X, Calendar, BookOpen, Home, Mail } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { cn } from '@/lib/utils';
-import { SignedIn, SignedOut, UserButton, useUser } from '@clerk/nextjs';
+import { SignedIn, SignedOut, UserButton, useUser, useAuth } from '@clerk/nextjs';
 import { useRouter } from 'next/navigation';
 
 const navigation = [
@@ -19,7 +19,9 @@ const navigation = [
 export default function Header() {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [shouldShowGetPasses, setShouldShowGetPasses] = useState(false);
   const router = useRouter();
+  const { isSignedIn, isLoaded } = useAuth();
 
   useEffect(() => {
     const handleScroll = () => {
@@ -29,6 +31,18 @@ export default function Header() {
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
+
+  // Handle authentication state changes with a small delay to ensure proper updates
+  useEffect(() => {
+    if (isLoaded) {
+      // Small delay to ensure state is fully updated after sign out
+      const timer = setTimeout(() => {
+        setShouldShowGetPasses(!isSignedIn);
+      }, 100);
+      
+      return () => clearTimeout(timer);
+    }
+  }, [isSignedIn, isLoaded]);
 
   return (
     <header
@@ -78,19 +92,19 @@ export default function Header() {
             </Button>
             
             {/* Show Get Passes button only when signed out */}
-            <SignedOut>
+            {shouldShowGetPasses && (
               <Button 
                 size="sm" 
                 onClick={() => router.push('/sign-in')}
               >
                 Get Passes
               </Button>
-            </SignedOut>
+            )}
             
             {/* Show User Button when signed in */}
-            <SignedIn>
+            {isLoaded && isSignedIn && (
               <UserButton afterSignOutUrl="/" />
-            </SignedIn>
+            )}
           </div>
 
           {/* Mobile Menu Button */}
@@ -132,7 +146,7 @@ export default function Header() {
                 </Button>
                 
                 {/* Mobile Get Passes button - only when signed out */}
-                <SignedOut>
+                {shouldShowGetPasses && (
                   <Button 
                     className="w-full justify-start" 
                     onClick={() => {
@@ -142,14 +156,14 @@ export default function Header() {
                   >
                     Get Passes
                   </Button>
-                </SignedOut>
+                )}
                 
                 {/* Mobile User Button when signed in */}
-                <SignedIn>
+                {isLoaded && isSignedIn && (
                   <div className="flex justify-center py-2">
                     <UserButton afterSignOutUrl="/" />
                   </div>
-                </SignedIn>
+                )}
               </div>
             </div>
           </div>

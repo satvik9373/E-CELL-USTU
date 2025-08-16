@@ -9,6 +9,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { useAuth, useClerk } from '@clerk/nextjs';
 import { useToast } from '@/hooks/use-toast';
+import { useRouter } from 'next/navigation';
 
 const upcomingEvents = [
   {
@@ -75,15 +76,21 @@ export default function EventsPage() {
   const { isSignedIn } = useAuth();
   const { openSignIn } = useClerk();
   const { toast } = useToast();
+  const router = useRouter();
 
   const handleEventClick = (eventTitle: string) => {
     if (isSignedIn) {
-      // User is signed in - show eligible toast
+      // User is signed in - show eligible toast and redirect to success page
       toast({
         variant: "eligible" as any,
         title: "Eligible",
-        description: "You're eligible to get the passes — book now!!",
+        description: "Wooho!! - You're eligible to get the passes",
       });
+      
+      // Redirect to success page after a short delay
+      setTimeout(() => {
+        router.push('/success');
+      }, 1500);
     } else {
       // User is not signed in - show not eligible toast with login action
       toast({
