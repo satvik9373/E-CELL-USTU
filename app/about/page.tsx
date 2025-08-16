@@ -71,6 +71,86 @@ export default function AboutPage() {
           </div>
         </div>
       </section>
+
+      {/* In The Spotlight Section */}
+      <section className="w-full py-16 px-4 bg-white dark:bg-neutral-950">
+        <div className="max-w-7xl mx-auto">
+          <h2 className="text-3xl md:text-4xl font-extrabold uppercase text-[#142257] dark:text-[#F5E9D7] mb-12 tracking-wide text-center">
+            IN THE SPOTLIGHT
+          </h2>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            {/* Spotlight Card 1 */}
+            <div className="bg-white dark:bg-neutral-900 rounded-lg shadow-md hover:shadow-xl transition-all duration-300 hover:scale-105 border border-gray-100 dark:border-neutral-800 overflow-hidden group">
+              <div className="aspect-video w-full bg-gradient-to-br from-[#142257] to-[#1a2d6b] relative overflow-hidden">
+                <img
+                  src="/Images/e-cell-logo.jpeg"
+                  alt="Startup Innovation"
+                  className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
+                />
+                <div className="absolute inset-0 bg-[#142257]/20 group-hover:bg-[#142257]/10 transition-colors duration-300"></div>
+              </div>
+              <div className="p-4 bg-[#142257] dark:bg-[#142257]">
+                <h3 className="text-lg font-bold text-white text-center">
+                  Startup Innovation
+                </h3>
+              </div>
+            </div>
+
+            {/* Spotlight Card 2 */}
+            <div className="bg-white dark:bg-neutral-900 rounded-lg shadow-md hover:shadow-xl transition-all duration-300 hover:scale-105 border border-gray-100 dark:border-neutral-800 overflow-hidden group">
+              <div className="aspect-video w-full bg-gradient-to-br from-[#142257] to-[#1a2d6b] relative overflow-hidden">
+                <img
+                  src="/Images/about-us.png"
+                  alt="Entrepreneurship Excellence"
+                  className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
+                />
+                <div className="absolute inset-0 bg-[#142257]/20 group-hover:bg-[#142257]/10 transition-colors duration-300"></div>
+              </div>
+              <div className="p-4 bg-[#142257] dark:bg-[#142257]">
+                <h3 className="text-lg font-bold text-white text-center">
+                  Entrepreneurship Excellence
+                </h3>
+              </div>
+            </div>
+
+            {/* Spotlight Card 3 */}
+            <div className="bg-white dark:bg-neutral-900 rounded-lg shadow-md hover:shadow-xl transition-all duration-300 hover:scale-105 border border-gray-100 dark:border-neutral-800 overflow-hidden group">
+              <div className="aspect-video w-full bg-gradient-to-br from-[#142257] to-[#1a2d6b] relative overflow-hidden">
+                <img
+                  src="/Images/Aarush.png"
+                  alt="Leadership Development"
+                  className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
+                />
+                <div className="absolute inset-0 bg-[#142257]/20 group-hover:bg-[#142257]/10 transition-colors duration-300"></div>
+              </div>
+              <div className="p-4 bg-[#142257] dark:bg-[#142257]">
+                <h3 className="text-lg font-bold text-white text-center">
+                  Leadership Development
+                </h3>
+              </div>
+            </div>
+
+            {/* Spotlight Card 4 */}
+            <div className="bg-white dark:bg-neutral-900 rounded-lg shadow-md hover:shadow-xl transition-all duration-300 hover:scale-105 border border-gray-100 dark:border-neutral-800 overflow-hidden group">
+              <div className="aspect-video w-full bg-gradient-to-br from-[#142257] to-[#1a2d6b] relative overflow-hidden">
+                <img
+                  src="/Images/Pradyut.png"
+                  alt="Tech Innovation"
+                  className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
+                />
+                <div className="absolute inset-0 bg-[#142257]/20 group-hover:bg-[#142257]/10 transition-colors duration-300"></div>
+              </div>
+              <div className="p-4 bg-[#142257] dark:bg-[#142257]">
+                <h3 className="text-lg font-bold text-white text-center">
+                  Tech Innovation
+                </h3>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
       <Footer />
     </main>
   );

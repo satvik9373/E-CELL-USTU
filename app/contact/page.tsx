@@ -47,23 +47,13 @@ const officeHours = [
 const departments = [
   {
     name: 'General Inquiries',
-    email: 'info@ecell.edu',
+    email: 'ecell@ustu.edu.in',
     description: 'For general questions about E-Cell and our programs'
   },
   {
-    name: 'Program Applications',
-    email: 'programs@ecell.edu',
-    description: 'For questions about our incubation and mentorship programs'
-  },
-  {
     name: 'Events & Partnerships',
-    email: 'events@ecell.edu',
+    email: 'president.ecell@ustu.edu.in or secretary.ecell@ustu.edu.in',
     description: 'For event registrations and partnership opportunities'
-  },
-  {
-    name: 'Media & Press',
-    email: 'media@ecell.edu',
-    description: 'For media inquiries and press-related questions'
   }
 ];
 
@@ -91,42 +81,6 @@ export default function ContactPage() {
               Have questions about our programs, want to partner with us, or need support? 
               We're here to help and would love to hear from you.
             </p>
-          </div>
-        </div>
-      </section>
-
-      {/* Contact Methods */}
-      <section className="py-16 lg:py-24">
-        <div className="container mx-auto px-6 lg:px-8">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {contactMethods.map((method, index) => {
-              const Icon = method.icon;
-              return (
-                <Card
-                  key={index}
-                  className="group hover:border-primary/20 transition-all duration-300 hover:scale-105 hover:shadow-lg cursor-pointer"
-                  onClick={() => method.action !== '#' && window.open(method.action, '_self')}
-                >
-                  <CardContent className="p-6 text-center">
-                    <div className="w-16 h-16 mx-auto mb-4 rounded-2xl bg-gradient-to-r from-primary to-primary/80 flex items-center justify-center group-hover:scale-110 transition-transform">
-                      <Icon className="h-8 w-8 text-white" />
-                    </div>
-                    
-                    <h3 className="text-lg font-semibold text-foreground mb-2">
-                      {method.title}
-                    </h3>
-                    
-                    <p className="text-muted-foreground text-sm mb-3 leading-relaxed">
-                      {method.description}
-                    </p>
-                    
-                    <p className="text-primary font-medium text-sm">
-                      {method.contact}
-                    </p>
-                  </CardContent>
-                </Card>
-              );
-            })}
           </div>
         </div>
       </section>
@@ -232,22 +186,6 @@ export default function ContactPage() {
 
             {/* Contact Information */}
             <div className="space-y-8">
-              {/* Office Hours */}
-              <div>
-                <h3 className="text-xl font-semibold text-foreground mb-4 flex items-center">
-                  <Clock className="h-5 w-5 mr-2 text-primary" />
-                  Office Hours
-                </h3>
-                <div className="space-y-2">
-                  {officeHours.map((schedule, index) => (
-                    <div key={index} className="flex justify-between items-center py-2 border-b border-border/50 last:border-0">
-                      <span className="text-muted-foreground">{schedule.day}</span>
-                      <span className="font-medium text-foreground">{schedule.hours}</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
               {/* Department Contacts */}
               <div>
                 <h3 className="text-xl font-semibold text-foreground mb-4 flex items-center">
@@ -264,33 +202,6 @@ export default function ContactPage() {
                   ))}
                 </div>
               </div>
-
-              {/* Quick Actions */}
-              <div>
-                <h3 className="text-xl font-semibold text-foreground mb-4">
-                  Quick Actions
-                </h3>
-                <div className="space-y-3">
-                  <Button variant="outline" className="w-full justify-start" asChild>
-                    <a href="mailto:hello@ecell.edu">
-                      <Mail className="h-4 w-4 mr-2" />
-                      Send Email
-                    </a>
-                  </Button>
-                  <Button variant="outline" className="w-full justify-start" asChild>
-                    <a href="tel:+919876543210">
-                      <Phone className="h-4 w-4 mr-2" />
-                      Call Now
-                    </a>
-                  </Button>
-                  <Button variant="outline" className="w-full justify-start" asChild>
-                    <a href="/events">
-                      <Calendar className="h-4 w-4 mr-2" />
-                      Book Meeting
-                    </a>
-                  </Button>
-                </div>
-              </div>
             </div>
           </div>
         </div>
@@ -301,27 +212,25 @@ export default function ContactPage() {
         <div className="container mx-auto px-6 lg:px-8">
           <div className="max-w-3xl mx-auto text-center mb-12">
             <h2 className="text-3xl font-bold text-foreground mb-4">
-              Visit Our Office
+              Visit Our Campus
             </h2>
             <p className="text-muted-foreground">
-              Located in the heart of IIT Mumbai campus, our office is easily accessible 
+              Located at Universal SkillTech University, our campus is easily accessible 
               and equipped with modern facilities for meetings and collaborations.
             </p>
           </div>
 
-          <div className="rounded-2xl overflow-hidden border bg-muted/20 h-96 flex items-center justify-center">
-            <div className="text-center">
-              <MapPin className="h-12 w-12 text-primary mx-auto mb-4" />
-              <h3 className="text-lg font-semibold text-foreground mb-2">
-                Innovation Hub, IIT Campus
-              </h3>
-              <p className="text-muted-foreground">
-                Mumbai, Maharashtra 400076, India
-              </p>
-              <Button variant="outline" className="mt-4">
-                Get Directions
-              </Button>
-            </div>
+          <div className="rounded-2xl overflow-hidden border bg-muted/20">
+            <iframe 
+              src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3764.430968979808!2d72.91438387503464!3d19.35048318191144!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3be7a5004f9c88b3%3A0x1c7dd1a255ef508e!2sUniversal%20SkillTech%20University!5e0!3m2!1sen!2sin!4v1755333989700!5m2!1sen!2sin" 
+              width="100%" 
+              height="450" 
+              style={{ border: 0 }}
+              allowFullScreen={true}
+              loading="lazy" 
+              referrerPolicy="no-referrer-when-downgrade"
+              className="w-full"
+            />
           </div>
         </div>
       </section>
