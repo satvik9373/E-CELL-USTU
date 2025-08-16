@@ -6,6 +6,8 @@ import { Menu, X, Calendar, BookOpen, Home, Mail } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { cn } from '@/lib/utils';
+import { SignedIn, SignedOut, UserButton, useUser } from '@clerk/nextjs';
+import { useRouter } from 'next/navigation';
 
 const navigation = [
   { name: 'Home', href: '/', icon: Home },
@@ -17,6 +19,7 @@ const navigation = [
 export default function Header() {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const router = useRouter();
 
   useEffect(() => {
     const handleScroll = () => {
@@ -73,9 +76,21 @@ export default function Header() {
             <Button variant="outline" size="sm" asChild>
               <Link href="/summit">Summit 2024</Link>
             </Button>
-            <Button size="sm" asChild>
-              <Link href="/summit/passes">Get Passes</Link>
-            </Button>
+            
+            {/* Show Get Passes button only when signed out */}
+            <SignedOut>
+              <Button 
+                size="sm" 
+                onClick={() => router.push('/sign-in')}
+              >
+                Get Passes
+              </Button>
+            </SignedOut>
+            
+            {/* Show User Button when signed in */}
+            <SignedIn>
+              <UserButton afterSignOutUrl="/" />
+            </SignedIn>
           </div>
 
           {/* Mobile Menu Button */}
@@ -115,11 +130,26 @@ export default function Header() {
                     Summit 2024
                   </Link>
                 </Button>
-                <Button className="w-full justify-start" asChild>
-                  <Link href="/summit/passes" onClick={() => setIsMobileMenuOpen(false)}>
+                
+                {/* Mobile Get Passes button - only when signed out */}
+                <SignedOut>
+                  <Button 
+                    className="w-full justify-start" 
+                    onClick={() => {
+                      setIsMobileMenuOpen(false);
+                      router.push('/sign-in');
+                    }}
+                  >
                     Get Passes
-                  </Link>
-                </Button>
+                  </Button>
+                </SignedOut>
+                
+                {/* Mobile User Button when signed in */}
+                <SignedIn>
+                  <div className="flex justify-center py-2">
+                    <UserButton afterSignOutUrl="/" />
+                  </div>
+                </SignedIn>
               </div>
             </div>
           </div>

@@ -1,3 +1,5 @@
+"use client";
+
 import Header from '@/components/layout/header';
 import Footer from '@/components/layout/footer';
 import { Badge } from '@/components/ui/badge';
@@ -5,6 +7,8 @@ import { Button } from '@/components/ui/button';
 import { Calendar, Clock, MapPin, Users, ArrowRight, ExternalLink } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
+import { SignedIn, SignedOut } from '@clerk/nextjs';
+import GetPassButton from '@/components/ui/get-pass-button';
 
 const upcomingEvents = [
   {
@@ -98,81 +102,86 @@ export default function EventsPage() {
       {/* Upcoming Events */}
       <section className="py-16 lg:py-24">
         <div className="container mx-auto px-6 lg:px-8">
-          <div className="max-w-3xl mx-auto text-center mb-16">
-            <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-6">
+          <div className="max-w-3xl mx-auto text-center mb-4">
+            <h2 className="text-3xl md:text-4xl font-bold mb-6" style={{ color: '#142257' }}>
               Upcoming Events
             </h2>
             <p className="text-lg text-muted-foreground">
               Don't miss these exciting opportunities to connect, learn, and grow.
             </p>
           </div>
+        </div>
+      </section>
 
-          <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-8">
-            {upcomingEvents.map((event) => (
-              <div
-                key={event.id}
-                className="group bg-background border rounded-2xl overflow-hidden hover:border-primary/20 transition-all duration-300 hover:scale-105 hover:shadow-xl"
-              >
-                <div className="relative h-48 overflow-hidden">
-                  <Image
-                    src={event.image}
-                    alt={event.title}
-                    fill
-                    className="object-cover transition-transform duration-500 group-hover:scale-110"
-                    sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 33vw"
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-background/60 to-transparent"></div>
-                  
-                  <div className="absolute top-4 left-4">
-                    <Badge variant="secondary" className="bg-background/90 backdrop-blur-sm">
-                      {event.category}
-                    </Badge>
-                  </div>
-
-                  <div className="absolute top-4 right-4">
-                    <div className="px-3 py-1 rounded-full bg-primary text-white text-sm font-medium">
-                      {event.price}
-                    </div>
-                  </div>
-                </div>
-
-                <div className="p-6">
-                  <h3 className="text-xl font-semibold text-foreground mb-2">
-                    {event.title}
+      {/* Vision Section */}
+      <section className="py-0 lg:py-0">
+        <div className="container mx-auto px-6 lg:px-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            {/* PPT Workshop */}
+            <div className="group relative overflow-hidden rounded-2xl bg-gradient-to-br from-amber-500 to-orange-600 hover:scale-105 transition-all duration-300 shadow-lg hover:shadow-2xl">
+              <div className="aspect-[3/4] relative">
+                <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent z-10"></div>
+                <img
+                  src="/Images/about-us.png"
+                  alt="PPT Workshop"
+                  className="w-full h-full object-cover"
+                />
+                <div className="absolute bottom-6 left-6 right-6 z-20">
+                  <h3 className="text-2xl font-bold text-white mb-2">
+                    PPT Workshop
                   </h3>
-                  
-                  <p className="text-muted-foreground mb-4 leading-relaxed">
-                    {event.description}
-                  </p>
-
-                  <div className="space-y-2 mb-6">
-                    <div className="flex items-center text-sm text-muted-foreground">
-                      <Calendar className="h-4 w-4 mr-2" />
-                      {event.date}
-                    </div>
-                    <div className="flex items-center text-sm text-muted-foreground">
-                      <Clock className="h-4 w-4 mr-2" />
-                      {event.time}
-                    </div>
-                    <div className="flex items-center text-sm text-muted-foreground">
-                      <MapPin className="h-4 w-4 mr-2" />
-                      {event.location}
-                    </div>
-                    <div className="flex items-center text-sm text-muted-foreground">
-                      <Users className="h-4 w-4 mr-2" />
-                      Max {event.maxParticipants} participants
-                    </div>
-                  </div>
-
-                  <Button className="w-full group/btn" asChild>
-                    <Link href={`/events/${event.id}/register`}>
-                      Register Now
-                      <ArrowRight className="h-4 w-4 ml-2 transition-transform group-hover/btn:translate-x-1" />
-                    </Link>
-                  </Button>
+                  <p className="text-white/90 text-sm mb-4">Learn presentation skills</p>
+                  <GetPassButton 
+                    eventTitle="PPT Workshop"
+                    className="w-full bg-white text-black hover:bg-white/90"
+                  />
                 </div>
               </div>
-            ))}
+            </div>
+
+            {/* Pitching Event */}
+            <div className="group relative overflow-hidden rounded-2xl bg-gradient-to-br from-slate-700 to-slate-900 hover:scale-105 transition-all duration-300 shadow-lg hover:shadow-2xl">
+              <div className="aspect-[3/4] relative">
+                <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent z-10"></div>
+                <img
+                  src="/Images/e-cell-logo.jpeg"
+                  alt="Pitching Event"
+                  className="w-full h-full object-cover"
+                />
+                <div className="absolute bottom-6 left-6 right-6 z-20">
+                  <h3 className="text-2xl font-bold text-white mb-2">
+                    Pitching Event
+                  </h3>
+                  <p className="text-white/90 text-sm mb-4">Present your ideas</p>
+                  <GetPassButton 
+                    eventTitle="Pitching Event"
+                    className="w-full bg-white text-black hover:bg-white/90"
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Innovation Summit */}
+            <div className="group relative overflow-hidden rounded-2xl bg-gradient-to-br from-blue-600 to-indigo-700 hover:scale-105 transition-all duration-300 shadow-lg hover:shadow-2xl">
+              <div className="aspect-[3/4] relative">
+                <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent z-10"></div>
+                <img
+                  src="/Images/Aarush.png"
+                  alt="Innovation Summit"
+                  className="w-full h-full object-cover"
+                />
+                <div className="absolute bottom-6 left-6 right-6 z-20">
+                  <h3 className="text-2xl font-bold text-white mb-2">
+                    Innovation Summit
+                  </h3>
+                  <p className="text-white/90 text-sm mb-4">Annual flagship event</p>
+                  <GetPassButton 
+                    eventTitle="Innovation Summit"
+                    className="w-full bg-white text-black hover:bg-white/90"
+                  />
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </section>
