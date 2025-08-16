@@ -7,8 +7,8 @@ import { Button } from '@/components/ui/button';
 import { Calendar, Clock, MapPin, Users, ArrowRight, ExternalLink } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { SignedIn, SignedOut } from '@clerk/nextjs';
-import GetPassButton from '@/components/ui/get-pass-button';
+import { useAuth, useClerk } from '@clerk/nextjs';
+import { useToast } from '@/hooks/use-toast';
 
 const upcomingEvents = [
   {
@@ -72,6 +72,37 @@ const pastEvents = [
 ];
 
 export default function EventsPage() {
+  const { isSignedIn } = useAuth();
+  const { openSignIn } = useClerk();
+  const { toast } = useToast();
+
+  const handleEventClick = (eventTitle: string) => {
+    if (isSignedIn) {
+      // User is signed in - show eligible toast
+      toast({
+        variant: "eligible" as any,
+        title: "Eligible",
+        description: "You're eligible to get the passes — book now!!",
+      });
+    } else {
+      // User is not signed in - show not eligible toast with login action
+      toast({
+        variant: "notEligible" as any,
+        title: "Not Eligible", 
+        description: "You're not eligible to book tickets. Kindly login and try again.",
+        action: (
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => openSignIn()}
+            className="bg-white text-red-600 border-white hover:bg-white/90"
+          >
+            Login
+          </Button>
+        ),
+      });
+    }
+  };
   return (
     <main className="min-h-screen">
       <Header />
@@ -118,7 +149,10 @@ export default function EventsPage() {
         <div className="container mx-auto px-6 lg:px-8">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             {/* PPT Workshop */}
-            <div className="group relative overflow-hidden rounded-2xl bg-gradient-to-br from-amber-500 to-orange-600 hover:scale-105 transition-all duration-300 shadow-lg hover:shadow-2xl">
+            <div 
+              className="group relative overflow-hidden rounded-2xl bg-gradient-to-br from-amber-500 to-orange-600 hover:scale-105 transition-all duration-300 shadow-lg hover:shadow-2xl cursor-pointer"
+              onClick={() => handleEventClick('PPT Workshop')}
+            >
               <div className="aspect-[3/4] relative">
                 <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent z-10"></div>
                 <img
@@ -130,17 +164,22 @@ export default function EventsPage() {
                   <h3 className="text-2xl font-bold text-white mb-2">
                     PPT Workshop
                   </h3>
-                  <p className="text-white/90 text-sm mb-4">Learn presentation skills</p>
-                  <GetPassButton 
-                    eventTitle="PPT Workshop"
-                    className="w-full bg-white text-black hover:bg-white/90"
-                  />
+                  <div className="flex items-center justify-between">
+                    <p className="text-white/90 text-sm">Learn presentation skills</p>
+                    <div className="flex items-center space-x-2">
+                      <span className="text-white/90 text-sm">Get Passes</span>
+                      <ArrowRight className="h-5 w-5 text-white group-hover:translate-x-1 transition-transform" />
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
 
             {/* Pitching Event */}
-            <div className="group relative overflow-hidden rounded-2xl bg-gradient-to-br from-slate-700 to-slate-900 hover:scale-105 transition-all duration-300 shadow-lg hover:shadow-2xl">
+            <div 
+              className="group relative overflow-hidden rounded-2xl bg-gradient-to-br from-slate-700 to-slate-900 hover:scale-105 transition-all duration-300 shadow-lg hover:shadow-2xl cursor-pointer"
+              onClick={() => handleEventClick('Pitching Event')}
+            >
               <div className="aspect-[3/4] relative">
                 <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent z-10"></div>
                 <img
@@ -152,17 +191,22 @@ export default function EventsPage() {
                   <h3 className="text-2xl font-bold text-white mb-2">
                     Pitching Event
                   </h3>
-                  <p className="text-white/90 text-sm mb-4">Present your ideas</p>
-                  <GetPassButton 
-                    eventTitle="Pitching Event"
-                    className="w-full bg-white text-black hover:bg-white/90"
-                  />
+                  <div className="flex items-center justify-between">
+                    <p className="text-white/90 text-sm">Present your ideas</p>
+                    <div className="flex items-center space-x-2">
+                      <span className="text-white/90 text-sm">Get Passes</span>
+                      <ArrowRight className="h-5 w-5 text-white group-hover:translate-x-1 transition-transform" />
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
 
             {/* Innovation Summit */}
-            <div className="group relative overflow-hidden rounded-2xl bg-gradient-to-br from-blue-600 to-indigo-700 hover:scale-105 transition-all duration-300 shadow-lg hover:shadow-2xl">
+            <div 
+              className="group relative overflow-hidden rounded-2xl bg-gradient-to-br from-blue-600 to-indigo-700 hover:scale-105 transition-all duration-300 shadow-lg hover:shadow-2xl cursor-pointer"
+              onClick={() => handleEventClick('Innovation Summit')}
+            >
               <div className="aspect-[3/4] relative">
                 <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent z-10"></div>
                 <img
@@ -174,11 +218,13 @@ export default function EventsPage() {
                   <h3 className="text-2xl font-bold text-white mb-2">
                     Innovation Summit
                   </h3>
-                  <p className="text-white/90 text-sm mb-4">Annual flagship event</p>
-                  <GetPassButton 
-                    eventTitle="Innovation Summit"
-                    className="w-full bg-white text-black hover:bg-white/90"
-                  />
+                  <div className="flex items-center justify-between">
+                    <p className="text-white/90 text-sm">Annual flagship event</p>
+                    <div className="flex items-center space-x-2">
+                      <span className="text-white/90 text-sm">Get Passes</span>
+                      <ArrowRight className="h-5 w-5 text-white group-hover:translate-x-1 transition-transform" />
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
