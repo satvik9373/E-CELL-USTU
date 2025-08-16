@@ -177,59 +177,6 @@ export default function EventsPage() {
         </div>
       </section>
 
-      {/* Past Events */}
-      <section className="py-16 lg:py-24 bg-muted/30">
-        <div className="container mx-auto px-6 lg:px-8">
-          <div className="max-w-3xl mx-auto text-center mb-16">
-            <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-6">
-              Past Events
-            </h2>
-            <p className="text-lg text-muted-foreground">
-              Take a look at some of our successful events and the impact we've made.
-            </p>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-            {pastEvents.map((event) => (
-              <div
-                key={event.id}
-                className="group bg-background border rounded-2xl overflow-hidden hover:border-primary/20 transition-all duration-300 hover:scale-105"
-              >
-                <div className="relative h-64 overflow-hidden">
-                  <Image
-                    src={event.image}
-                    alt={event.title}
-                    fill
-                    className="object-cover transition-transform duration-500 group-hover:scale-110"
-                    sizes="(max-width: 768px) 100vw, 50vw"
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-background/80 to-transparent"></div>
-                  
-                  <div className="absolute bottom-4 left-4 right-4">
-                    <h3 className="text-xl font-semibold text-white mb-2">
-                      {event.title}
-                    </h3>
-                    <div className="flex items-center justify-between text-white/90 text-sm">
-                      <span>{event.date}</span>
-                      <span className="flex items-center">
-                        <Users className="h-4 w-4 mr-1" />
-                        {event.attendees} attendees
-                      </span>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="p-6">
-                  <p className="text-muted-foreground leading-relaxed">
-                    {event.description}
-                  </p>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
       {/* CTA Section */}
       <section className="py-16 lg:py-24">
         <div className="container mx-auto px-6 lg:px-8">
