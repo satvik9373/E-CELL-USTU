@@ -6,7 +6,7 @@ import Footer from '@/components/layout/footer';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Calendar, Clock, MapPin, Download, Ticket, Users } from 'lucide-react';
+import { Download, Ticket } from 'lucide-react';
 import { useAuth } from '@clerk/nextjs';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
@@ -25,6 +25,50 @@ export default function TicketDashboard() {
   const { toast } = useToast();
   const router = useRouter();
 
+  // Extract loadUserTickets to be reusable
+  const loadUserTickets = async () => {
+    if (!clerkUserId) return;
+
+    try {
+      console.log('🔄 Loading user tickets via API...');
+      
+      const response = await fetch('/api/get-tickets');
+      
+      if (!response.ok) {
+        if (response.status === 401) {
+          toast({
+            variant: "destructive",
+            title: "Authentication Error",
+            description: "Please sign in again to view your tickets.",
+          });
+          return;
+        }
+        throw new Error('Failed to fetch tickets');
+      }
+
+      const ticketsData = await response.json();
+      console.log('🎫 Fetched user tickets:', ticketsData);
+      
+      // Transform the data to match expected structure
+      const transformedTickets = ticketsData.map((ticket: any) => ({
+        ...ticket,
+        event: ticket.events
+      }));
+      
+      setTickets(transformedTickets || []);
+      
+    } catch (error) {
+      console.error('Error loading tickets:', error);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to load your tickets. Please try again.",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
   // Redirect if not signed in
   useEffect(() => {
     if (!isSignedIn) {
@@ -35,72 +79,27 @@ export default function TicketDashboard() {
 
   // Load user's tickets from Supabase
   useEffect(() => {
-    async function loadUserTickets() {
-      if (!clerkUserId) return;
-
-      try {
-        console.log('🔄 Loading user tickets from Supabase...');
-        
-        const { data: ticketsData, error: ticketsError } = await supabase
-          .from('tickets')
-          .select(`
-            *,
-            event:events(id, image_url)
-          `)
-          .eq('user_id', clerkUserId)
-          .order('created_at', { ascending: false });
-
-        if (ticketsError) {
-          console.error('Error fetching tickets:', ticketsError);
-          throw ticketsError;
-        }
-
-        console.log('🎫 Fetched user tickets:', ticketsData);
-        setTickets(ticketsData || []);
-        
-      } catch (error) {
-        console.error('Error loading tickets:', error);
-        toast({
-          variant: "destructive",
-          title: "Error",
-          description: "Failed to load your tickets. Please try again.",
-        });
-      } finally {
-        setLoading(false);
-      }
-    }
-
     if (clerkUserId) {
       loadUserTickets();
     }
   }, [clerkUserId, toast]);
 
-  // Subscribe to real-time ticket updates
+  // Subscribe to real-time ticket updates (simplified for server-side approach)
   useEffect(() => {
     if (!clerkUserId) return;
 
-    console.log('🔄 Setting up real-time subscription for user tickets...');
+    console.log('🔄 Setting up periodic refresh for user tickets...');
     
-    const subscription = supabase
-      .channel('user_tickets_changes')
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'tickets',
-          filter: `user_id=eq.${clerkUserId}`
-        },
-        (payload) => {
-          console.log('🔄 User tickets table changed:', payload);
-          // Refetch tickets when user's tickets change
-          window.location.reload(); // Simple approach for now
-        }
-      )
-      .subscribe();
+    // Since we're using server-side APIs, we'll use a simple periodic refresh
+    // instead of real-time subscriptions for now
+    const interval = setInterval(() => {
+      if (clerkUserId) {
+        loadUserTickets();
+      }
+    }, 30000); // Refresh every 30 seconds
 
     return () => {
-      subscription.unsubscribe();
+      clearInterval(interval);
     };
   }, [clerkUserId]);
 
@@ -112,28 +111,11 @@ export default function TicketDashboard() {
     });
   };
 
-  const formatTime = (dateString: string) => {
-    return new Date(dateString).toLocaleTimeString('en-US', {
-      hour: '2-digit',
-      minute: '2-digit'
-    });
-  };
-
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'RESERVED': return 'bg-green-100 text-green-800';
       case 'CANCELLED': return 'bg-red-100 text-red-800';
       case 'CONFIRMED': return 'bg-blue-100 text-blue-800';
-      default: return 'bg-gray-100 text-gray-800';
-    }
-  };
-
-  const getEventStatusColor = (status: string) => {
-    switch (status) {
-      case 'upcoming': return 'bg-green-100 text-green-800';
-      case 'ongoing': return 'bg-yellow-100 text-yellow-800';
-      case 'completed': return 'bg-gray-100 text-gray-800';
-      case 'cancelled': return 'bg-red-100 text-red-800';
       default: return 'bg-gray-100 text-gray-800';
     }
   };
@@ -153,17 +135,40 @@ export default function TicketDashboard() {
 
   const handleCancelTicket = async (ticketId: string) => {
     try {
-      console.log('🗑️ Cancelling ticket:', ticketId);
+      console.log('🗑️ Cancelling ticket via API:', ticketId);
       
-      const { error } = await supabase
-        .from('tickets')
-        .update({ status: 'CANCELLED' })
-        .eq('id', ticketId)
-        .eq('user_id', clerkUserId);
+      const response = await fetch('/api/cancel-ticket', {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          ticketId: ticketId,
+        }),
+      });
 
-      if (error) {
-        console.error('Error cancelling ticket:', error);
-        throw error;
+      const result = await response.json();
+
+      if (!response.ok) {
+        if (response.status === 404) {
+          toast({
+            variant: "destructive",
+            title: "Ticket Not Found",
+            description: result.error || "This ticket could not be found.",
+          });
+          return;
+        }
+
+        if (response.status === 409) {
+          toast({
+            variant: "destructive",
+            title: "Already Cancelled",
+            description: result.error || "This ticket is already cancelled.",
+          });
+          return;
+        }
+
+        throw new Error(result.error || 'Failed to cancel ticket');
       }
 
       // Update local state
@@ -179,12 +184,12 @@ export default function TicketDashboard() {
         description: "Your ticket has been cancelled successfully.",
       });
 
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error cancelling ticket:', error);
       toast({
         variant: "destructive",
         title: "Error",
-        description: "Failed to cancel ticket. Please try again.",
+        description: error.message || "Failed to cancel ticket. Please try again.",
       });
     }
   };
@@ -230,6 +235,14 @@ export default function TicketDashboard() {
             <p className="text-xl text-muted-foreground mb-8 max-w-2xl mx-auto">
               Manage your reserved tickets, download them, and stay updated with your upcoming events.
             </p>
+
+            <Button 
+              onClick={() => loadUserTickets()} 
+              variant="outline"
+              disabled={loading}
+            >
+              {loading ? 'Loading...' : 'Refresh Tickets'}
+            </Button>
           </div>
         </div>
       </section>
@@ -258,9 +271,6 @@ export default function TicketDashboard() {
                     <div className="flex items-center justify-between mb-2">
                       <Badge className={getStatusColor(ticket.status)}>
                         {ticket.status}
-                      </Badge>
-                      <Badge variant="outline" className={getEventStatusColor(ticket.event.status)}>
-                        {ticket.event.status}
                       </Badge>
                     </div>
                     

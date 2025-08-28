@@ -28,6 +28,45 @@ export default function EventsPage() {
   const { toast } = useToast();
   const router = useRouter();
 
+  // Add test events function
+  const addTestEvents = async () => {
+    try {
+      const testEvents = [
+        {
+          id: '550e8400-e29b-41d4-a716-446655440001',
+          image_url: 'https://images.unsplash.com/photo-1560472355-536de3962603?w=800&h=600&fit=crop'
+        },
+        {
+          id: '550e8400-e29b-41d4-a716-446655440002', 
+          image_url: 'https://images.unsplash.com/photo-1559136555-9303baea8ebd?w=800&h=600&fit=crop'
+        },
+        {
+          id: '550e8400-e29b-41d4-a716-446655440003',
+          image_url: 'https://images.unsplash.com/photo-1587825140708-dfaf72ae4b04?w=800&h=600&fit=crop'
+        }
+      ];
+
+      for (const event of testEvents) {
+        await supabase.from('events').upsert(event, { onConflict: 'id' });
+      }
+      
+      toast({
+        title: "Test Events Added",
+        description: "Test events have been added to the database.",
+      });
+      
+      // Reload events
+      window.location.reload();
+    } catch (error) {
+      console.error('Error adding test events:', error);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to add test events.",
+      });
+    }
+  };
+
   // Load events from Supabase
   useEffect(() => {
     async function loadEvents() {
@@ -189,56 +228,64 @@ export default function EventsPage() {
     setBookingEventId(event.id);
 
     try {
-      console.log('🎫 Booking ticket for event:', event.id, 'user:', clerkUserId);
+      console.log('🎫 Booking ticket for event:', {
+        eventId: event.id,
+        userId: clerkUserId
+      });
 
-      // First ensure user exists in users table
-      const { error: userError } = await supabase
-        .from('users')
-        .upsert({
-          id: clerkUserId,
-          email: null, // We'll get this from Clerk if needed
-        }, {
-          onConflict: 'id'
-        });
+      // Call the server-side API route to book the ticket
+      const response = await fetch('/api/book-ticket', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          eventId: event.id,
+        }),
+      });
 
-      if (userError) {
-        console.error('Error ensuring user exists:', userError);
-      }
+      const result = await response.json();
 
-      // Insert ticket
-      const { data: ticket, error: ticketError } = await supabase
-        .from('tickets')
-        .insert({
-          user_id: clerkUserId,
-          event_id: event.id,
-          status: 'RESERVED',
-        })
-        .select()
-        .single();
-
-      if (ticketError) {
-        console.error('Error booking ticket:', ticketError);
-        
-        // Handle duplicate booking
-        if (ticketError.code === '23505') {
+      if (!response.ok) {
+        // Handle specific error cases
+        if (response.status === 409) {
           toast({
             variant: "destructive",
             title: "Already Booked",
-            description: "You already have a ticket for this event.",
+            description: result.error || "You already have a ticket for this event.",
           });
           return;
         }
-        
-        throw ticketError;
+
+        if (response.status === 401) {
+          toast({
+            variant: "destructive",
+            title: "Authentication Error",
+            description: "Please sign in again to book tickets.",
+          });
+          return;
+        }
+
+        throw new Error(result.error || 'Failed to book ticket');
       }
 
-      console.log('✅ Ticket booked successfully:', ticket);
+      console.log('✅ Ticket booked successfully:', result.ticket);
       
-      // Success - show toast and redirect
+      // Success - show toast with dashboard link
       toast({
         variant: "default",
         title: "Ticket Booked!",
-        description: "Your ticket has been reserved successfully. Redirecting to download...",
+        description: "Your ticket has been reserved successfully.",
+        action: (
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => router.push('/dashboard/tickets')}
+            className="bg-white text-green-600 border-white hover:bg-white/90"
+          >
+            View Tickets
+          </Button>
+        ),
       });
 
       // Store event data for success page (simplified)
@@ -247,7 +294,7 @@ export default function EventsPage() {
         title: 'Event', // Default since we don't have title anymore
         venue: 'Venue TBA', // Default since we don't have venue anymore
         date: new Date().toISOString(), // Use current date as fallback
-        ticketId: ticket.id,
+        ticketId: result.ticket.id,
       }));
 
       // Update events list to reflect booking
@@ -268,7 +315,7 @@ export default function EventsPage() {
       toast({
         variant: "destructive",
         title: "Booking Failed",
-        description: "Failed to book ticket. Please try again.",
+        description: error.message || "Failed to book ticket. Please try again.",
       });
     } finally {
       setBookingEventId(null);
@@ -341,9 +388,12 @@ export default function EventsPage() {
               <h3 className="text-2xl font-semibold text-muted-foreground mb-4">
                 No events found
               </h3>
-              <p className="text-muted-foreground">
+              <p className="text-muted-foreground mb-6">
                 Check back soon for upcoming events and workshops!
               </p>
+              <Button onClick={addTestEvents} variant="outline">
+                Add Test Events
+              </Button>
             </div>
           ) : (
             <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
