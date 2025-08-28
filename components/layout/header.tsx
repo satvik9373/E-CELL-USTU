@@ -91,6 +91,13 @@ export default function Header() {
               <Link href="/summit">Summit 2024</Link>
             </Button>
             
+            {/* Show Dashboard button when signed in */}
+            {isLoaded && isSignedIn && (
+              <Button variant="outline" size="sm" asChild>
+                <Link href="/dashboard">Dashboard</Link>
+              </Button>
+            )}
+            
             {/* Show Get Passes button only when signed out */}
             {shouldShowGetPasses && (
               <Button 
@@ -144,6 +151,16 @@ export default function Header() {
                     Summit 2024
                   </Link>
                 </Button>
+                
+                {/* Mobile Dashboard button - only when signed in */}
+                {isLoaded && isSignedIn && (
+                  <Button variant="outline" className="w-full justify-start" asChild>
+                    <Link href="/dashboard" onClick={() => setIsMobileMenuOpen(false)}>
+                      <Home className="h-4 w-4 mr-2" />
+                      Dashboard
+                    </Link>
+                  </Button>
+                )}
                 
                 {/* Mobile Get Passes button - only when signed out */}
                 {shouldShowGetPasses && (

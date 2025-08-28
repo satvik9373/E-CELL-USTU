@@ -1,0 +1,64 @@
+-- Sample data for testing the dashboard
+-- Run this after setting up the schema and after a user has logged in through Clerk
+
+-- This script assumes you have at least one user in the users table
+-- Replace 'YOUR_USER_ID_HERE' with an actual UUID from your users table
+
+-- First, get a user ID (replace with actual user ID from your users table)
+-- You can find this by running: SELECT id FROM users LIMIT 1;
+
+-- Sample tickets (replace the user_id with actual user ID)
+-- INSERT INTO tickets (user_id, event_id, booking_id, ticket_type, status, payment_status, qr_code) 
+-- SELECT 
+--     'YOUR_USER_ID_HERE'::UUID,
+--     e.id,
+--     generate_booking_id(),
+--     CASE 
+--         WHEN e.event_type = 'summit' THEN 'vip'
+--         WHEN e.event_type = 'workshop' THEN 'workshop'
+--         ELSE 'regular'
+--     END,
+--     'confirmed',
+--     'paid',
+--     'https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=' || generate_booking_id()
+-- FROM events e 
+-- WHERE e.title IN ('Innovation Summit 2024', 'Startup Pitch Competition', 'Tech Workshop Series');
+
+-- Sample certificates (replace the user_id with actual user ID)
+-- INSERT INTO certificates (user_id, event_id, certificate_type, issued_date, certificate_id, pdf_url)
+-- SELECT 
+--     'YOUR_USER_ID_HERE'::UUID,
+--     e.id,
+--     CASE 
+--         WHEN e.title = 'AI Conference 2024' THEN 'winner'
+--         ELSE 'participation'
+--     END,
+--     CURRENT_DATE - INTERVAL '5 days',
+--     generate_certificate_id(),
+--     'https://example.com/certificates/' || generate_certificate_id() || '.pdf'
+-- FROM events e 
+-- WHERE e.title IN ('AI Conference 2024', 'Blockchain Workshop');
+
+-- Sample certificate requests (replace the user_id with actual user ID)
+-- INSERT INTO certificate_requests (user_id, event_id, status, requested_date, rejection_reason)
+-- SELECT 
+--     'YOUR_USER_ID_HERE'::UUID,
+--     e.id,
+--     CASE 
+--         WHEN e.title = 'Design Thinking Session' THEN 'rejected'
+--         ELSE 'pending'
+--     END,
+--     CURRENT_DATE - INTERVAL '3 days',
+--     CASE 
+--         WHEN e.title = 'Design Thinking Session' THEN 'Did not meet attendance requirements (minimum 80% required)'
+--         ELSE NULL
+--     END
+-- FROM events e 
+-- WHERE e.title IN ('Design Thinking Session');
+
+-- Instructions for use:
+-- 1. First run the main schema.sql file
+-- 2. Log in to your app at least once to create a user record
+-- 3. Get the user ID from: SELECT id, email FROM users;
+-- 4. Replace 'YOUR_USER_ID_HERE' in the commented queries above with the actual UUID
+-- 5. Uncomment and run the INSERT statements
