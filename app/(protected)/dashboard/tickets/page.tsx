@@ -1,322 +1,343 @@
 "use client";
 
-import { useState } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
+import { useEffect, useState } from 'react';
+import Header from '@/components/layout/header';
+import Footer from '@/components/layout/footer';
 import { Badge } from '@/components/ui/badge';
-import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Skeleton } from '@/components/ui/skeleton';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Calendar, Clock, MapPin, Download, Ticket, Users } from 'lucide-react';
+import { useAuth } from '@clerk/nextjs';
 import { useToast } from '@/hooks/use-toast';
-import useSWR from 'swr';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table';
-import { Ticket, Download, Eye, Calendar, MapPin, Clock } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import { supabase, Database } from '@/lib/supabaseClient';
 
-interface TicketData {
-  id: string;
-  status: string;
-  qr_payload: string | null;
-  pdf_path: string | null;
-  created_at: string;
-  ticket_type?: string;
-  booking_id?: string;
-  events: {
-    id: string;
-    title: string;
-    starts_at: string;
-    venue: string;
-  } | null;
-}
-
-const statusConfig = {
-  RESERVED: { label: 'Reserved', variant: 'default' as const, color: 'bg-green-100 text-green-800' },
-  CONFIRMED: { label: 'Confirmed', variant: 'default' as const, color: 'bg-green-100 text-green-800' },
-  PENDING: { label: 'Pending', variant: 'secondary' as const, color: 'bg-yellow-100 text-yellow-800' },
-  CANCELLED: { label: 'Cancelled', variant: 'destructive' as const, color: 'bg-red-100 text-red-800' }
+type Ticket = Database['public']['Tables']['tickets']['Row'];
+type Event = Database['public']['Tables']['events']['Row'];
+type TicketWithEvent = Ticket & {
+  event: Event;
 };
 
-const fetcher = (url: string) => fetch(url).then(r => {
-  console.log('API Response Status:', r.status);
-  return r.json().then(data => {
-    console.log('API Response Data:', data);
-    return data;
-  });
-});
-
-export default function TicketsPage() {
-  const [selectedTicket, setSelectedTicket] = useState<TicketData | null>(null);
+export default function TicketDashboard() {
+  const [tickets, setTickets] = useState<TicketWithEvent[]>([]);
+  const [loading, setLoading] = useState(true);
+  const { isSignedIn, userId: clerkUserId } = useAuth();
   const { toast } = useToast();
+  const router = useRouter();
 
-  const { data, error, isLoading } = useSWR('/api/tickets', fetcher);
-  const tickets: TicketData[] = data?.tickets ?? [];
+  // Redirect if not signed in
+  useEffect(() => {
+    if (!isSignedIn) {
+      router.push('/');
+      return;
+    }
+  }, [isSignedIn, router]);
 
-  const formatDateTime = (dateTimeString: string) => {
-    const date = new Date(dateTimeString);
-    return {
-      date: date.toLocaleDateString('en-US', { 
-        month: 'short', 
-        day: 'numeric', 
-        year: 'numeric' 
-      }),
-      time: date.toLocaleTimeString('en-US', { 
-        hour: '2-digit', 
-        minute: '2-digit',
-        hour12: true 
-      })
-    };
-  };
+  // Load user's tickets from Supabase
+  useEffect(() => {
+    async function loadUserTickets() {
+      if (!clerkUserId) return;
 
-  const handleViewTicket = (ticket: TicketData) => {
-    setSelectedTicket(ticket);
-  };
+      try {
+        console.log('🔄 Loading user tickets from Supabase...');
+        
+        const { data: ticketsData, error: ticketsError } = await supabase
+          .from('tickets')
+          .select(`
+            *,
+            event:events(id, image_url)
+          `)
+          .eq('user_id', clerkUserId)
+          .order('created_at', { ascending: false });
 
-  const handleDownloadPDF = async (ticketId: string) => {
-    try {
-      const response = await fetch(`/api/tickets/${ticketId}/download`);
-      const data = await response.json();
-      
-      if (!response.ok) {
-        throw new Error(data.error || 'Failed to download');
-      }
-      
-      if (data.url) {
-        window.location.href = data.url;
+        if (ticketsError) {
+          console.error('Error fetching tickets:', ticketsError);
+          throw ticketsError;
+        }
+
+        console.log('🎫 Fetched user tickets:', ticketsData);
+        setTickets(ticketsData || []);
+        
+      } catch (error) {
+        console.error('Error loading tickets:', error);
         toast({
-          title: "Download Started",
-          description: "Your ticket PDF download will begin shortly.",
+          variant: "destructive",
+          title: "Error",
+          description: "Failed to load your tickets. Please try again.",
         });
+      } finally {
+        setLoading(false);
       }
-    } catch (error) {
-      console.error('Error downloading PDF:', error);
+    }
+
+    if (clerkUserId) {
+      loadUserTickets();
+    }
+  }, [clerkUserId, toast]);
+
+  // Subscribe to real-time ticket updates
+  useEffect(() => {
+    if (!clerkUserId) return;
+
+    console.log('🔄 Setting up real-time subscription for user tickets...');
+    
+    const subscription = supabase
+      .channel('user_tickets_changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'tickets',
+          filter: `user_id=eq.${clerkUserId}`
+        },
+        (payload) => {
+          console.log('🔄 User tickets table changed:', payload);
+          // Refetch tickets when user's tickets change
+          window.location.reload(); // Simple approach for now
+        }
+      )
+      .subscribe();
+
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, [clerkUserId]);
+
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric'
+    });
+  };
+
+  const formatTime = (dateString: string) => {
+    return new Date(dateString).toLocaleTimeString('en-US', {
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+  };
+
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'RESERVED': return 'bg-green-100 text-green-800';
+      case 'CANCELLED': return 'bg-red-100 text-red-800';
+      case 'CONFIRMED': return 'bg-blue-100 text-blue-800';
+      default: return 'bg-gray-100 text-gray-800';
+    }
+  };
+
+  const getEventStatusColor = (status: string) => {
+    switch (status) {
+      case 'upcoming': return 'bg-green-100 text-green-800';
+      case 'ongoing': return 'bg-yellow-100 text-yellow-800';
+      case 'completed': return 'bg-gray-100 text-gray-800';
+      case 'cancelled': return 'bg-red-100 text-red-800';
+      default: return 'bg-gray-100 text-gray-800';
+    }
+  };
+
+  const handleDownloadTicket = (ticket: TicketWithEvent) => {
+    // Store ticket data and redirect to success page for download
+    sessionStorage.setItem('selectedEvent', JSON.stringify({
+      id: ticket.event.id,
+      title: 'Event', // Default since we don't have title anymore
+      venue: 'Venue TBA', // Default since we don't have venue anymore  
+      date: ticket.created_at, // Use ticket creation date as fallback
+      ticketId: ticket.id,
+    }));
+    
+    router.push('/success');
+  };
+
+  const handleCancelTicket = async (ticketId: string) => {
+    try {
+      console.log('🗑️ Cancelling ticket:', ticketId);
+      
+      const { error } = await supabase
+        .from('tickets')
+        .update({ status: 'CANCELLED' })
+        .eq('id', ticketId)
+        .eq('user_id', clerkUserId);
+
+      if (error) {
+        console.error('Error cancelling ticket:', error);
+        throw error;
+      }
+
+      // Update local state
+      setTickets(prev => prev.map(ticket => 
+        ticket.id === ticketId 
+          ? { ...ticket, status: 'CANCELLED' as any }
+          : ticket
+      ));
+
       toast({
-        title: "Download Failed",
-        description: "Unable to download PDF. Please try again.",
+        variant: "default",
+        title: "Ticket Cancelled",
+        description: "Your ticket has been cancelled successfully.",
+      });
+
+    } catch (error) {
+      console.error('Error cancelling ticket:', error);
+      toast({
         variant: "destructive",
+        title: "Error",
+        description: "Failed to cancel ticket. Please try again.",
       });
     }
   };
 
-  if (error) {
-    return (
-      <div className="p-6 space-y-6">
-        <div className="space-y-2">
-          <h1 className="text-2xl font-semibold text-foreground">Reserved Tickets</h1>
-          <p className="text-muted-foreground">Manage your event tickets and reservations</p>
-        </div>
-        <Alert className="rounded-2xl" variant="destructive">
-          <Ticket className="h-4 w-4" />
-          <AlertDescription>
-            Failed to load tickets. Please refresh the page or try again later.
-          </AlertDescription>
-        </Alert>
-      </div>
-    );
+  if (!isSignedIn) {
+    return null; // Will redirect in useEffect
   }
 
-  if (isLoading) {
+  if (loading) {
     return (
-      <div className="p-6 space-y-6">
-        <div className="space-y-2">
-          <Skeleton className="h-8 w-64" />
-          <Skeleton className="h-4 w-96" />
+      <main className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-neutral-950 dark:to-neutral-900">
+        <Header />
+        <div className="pt-20 pb-16 lg:pt-28 lg:pb-24">
+          <div className="container mx-auto px-6 lg:px-8">
+            <div className="text-center">
+              <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-[#142257] mx-auto"></div>
+              <p className="mt-4 text-lg text-muted-foreground">Loading your tickets...</p>
+            </div>
+          </div>
         </div>
-        
-        <Card className="rounded-2xl shadow-sm">
-          <CardHeader>
-            <Skeleton className="h-6 w-48" />
-          </CardHeader>
-          <CardContent className="space-y-4">
-            {[...Array(3)].map((_, i) => (
-              <div key={i} className="flex items-center space-x-4">
-                <Skeleton className="h-12 w-full" />
-              </div>
-            ))}
-          </CardContent>
-        </Card>
-      </div>
+        <Footer />
+      </main>
     );
   }
 
   return (
-    <div className="p-6 space-y-6">
-      {/* Header */}
-      <div className="space-y-2">
-        <h1 className="text-2xl font-semibold text-foreground">Reserved Tickets</h1>
-        <p className="text-muted-foreground">
-          Manage your event tickets and reservations
-        </p>
-      </div>
+    <main className="min-h-screen">
+      <Header />
+      
+      {/* Header Section */}
+      <section className="pt-20 pb-16 lg:pt-28 lg:pb-24 bg-gradient-to-br from-primary/5 via-transparent to-primary/10">
+        <div className="container mx-auto px-6 lg:px-8">
+          <div className="max-w-4xl mx-auto text-center">
+            <Badge variant="outline" className="px-4 py-2 mb-6">
+              <Ticket className="h-4 w-4 mr-2" />
+              My Tickets
+            </Badge>
+            
+            <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-foreground mb-6 text-balance">
+              Your Event Tickets
+            </h1>
+            
+            <p className="text-xl text-muted-foreground mb-8 max-w-2xl mx-auto">
+              Manage your reserved tickets, download them, and stay updated with your upcoming events.
+            </p>
+          </div>
+        </div>
+      </section>
 
-      {/* Content */}
-      {tickets.length === 0 ? (
-        <Alert className="rounded-2xl">
-          <Ticket className="h-4 w-4" />
-          <AlertDescription>
-            No tickets found. Try booking an event from our events page.
-          </AlertDescription>
-        </Alert>
-      ) : (
-        <Card className="rounded-2xl shadow-sm">
-          <CardHeader className="pb-4">
-            <CardTitle className="flex items-center space-x-2">
-              <Ticket className="h-5 w-5 text-primary" />
-              <span>Your Tickets</span>
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="overflow-x-auto">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Event</TableHead>
-                    <TableHead>Date & Time</TableHead>
-                    <TableHead>Venue</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead className="text-right">Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {tickets.map((ticket) => {
-                    const { date, time } = ticket.events?.starts_at 
-                      ? formatDateTime(ticket.events.starts_at) 
-                      : { date: 'TBA', time: 'TBA' };
-                    const statusInfo = statusConfig[ticket.status as keyof typeof statusConfig] || statusConfig.PENDING;
-                    
-                    return (
-                      <TableRow key={ticket.id} className="hover:bg-accent/50">
-                        <TableCell>
-                          <div className="space-y-1">
-                            <div className="font-medium text-foreground">
-                              {ticket.events?.title || 'Unknown Event'}
-                            </div>
-                            <div className="text-xs text-muted-foreground">
-                              Ticket ID: {ticket.id.slice(0, 8)}...
-                            </div>
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          <div className="flex items-center space-x-2 text-sm">
-                            <Calendar className="h-4 w-4 text-muted-foreground" />
-                            <div>
-                              <div className="font-medium">{date}</div>
-                              <div className="text-muted-foreground flex items-center space-x-1">
-                                <Clock className="h-3 w-3" />
-                                <span>{time}</span>
-                              </div>
-                            </div>
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          <div className="flex items-center space-x-2 text-sm">
-                            <MapPin className="h-4 w-4 text-muted-foreground" />
-                            <span>{ticket.events?.venue || 'TBA'}</span>
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          <Badge 
-                            variant={statusInfo.variant}
-                            className="rounded-full"
-                          >
-                            {statusInfo.label}
-                          </Badge>
-                        </TableCell>
-                        <TableCell className="text-right">
-                          <div className="flex items-center justify-end space-x-2">
-                            <Dialog>
-                              <DialogTrigger asChild>
-                                <Button 
-                                  variant="outline" 
-                                  size="sm" 
-                                  className="rounded-full"
-                                  onClick={() => handleViewTicket(ticket)}
-                                >
-                                  <Eye className="h-4 w-4 mr-1" />
-                                  View
-                                </Button>
-                              </DialogTrigger>
-                              <DialogContent className="rounded-2xl">
-                                <DialogHeader>
-                                  <DialogTitle>Ticket Details</DialogTitle>
-                                </DialogHeader>
-                                {selectedTicket && (
-                                  <div className="space-y-4">
-                                    <div className="bg-accent/50 p-4 rounded-xl space-y-3">
-                                      <div className="text-center">
-                                        <h3 className="font-semibold text-lg">{selectedTicket.events?.title || 'Unknown Event'}</h3>
-                                        <p className="text-muted-foreground">Event Ticket</p>
-                                      </div>
-                                      <div className="grid grid-cols-2 gap-4 text-sm">
-                                        <div>
-                                          <p className="text-muted-foreground">Date</p>
-                                          <p className="font-medium">{selectedTicket.events?.starts_at ? formatDateTime(selectedTicket.events.starts_at).date : 'TBA'}</p>
-                                        </div>
-                                        <div>
-                                          <p className="text-muted-foreground">Time</p>
-                                          <p className="font-medium">{selectedTicket.events?.starts_at ? formatDateTime(selectedTicket.events.starts_at).time : 'TBA'}</p>
-                                        </div>
-                                        <div>
-                                          <p className="text-muted-foreground">Venue</p>
-                                          <p className="font-medium">{selectedTicket.events?.venue || 'TBA'}</p>
-                                        </div>
-                                        <div>
-                                          <p className="text-muted-foreground">Status</p>
-                                          <p className="font-medium">{selectedTicket.status}</p>
-                                        </div>
-                                      </div>
-                                    </div>
-                                    
-                                    {/* QR Code */}
-                                    <div className="flex justify-center">
-                                      <div className="w-32 h-32 bg-accent/50 rounded-xl flex items-center justify-center">
-                                        {selectedTicket.qr_payload ? (
-                                          <div className="text-center text-muted-foreground">
-                                            <div className="w-16 h-16 bg-primary/20 rounded mb-2 mx-auto flex items-center justify-center text-xs p-2 break-all">
-                                              {selectedTicket.qr_payload.slice(0, 10)}...
-                                            </div>
-                                            <p className="text-xs">QR Data</p>
-                                          </div>
-                                        ) : (
-                                          <div className="text-center text-muted-foreground">
-                                            <div className="w-16 h-16 bg-muted rounded mb-2 mx-auto"></div>
-                                            <p className="text-xs">No QR Code</p>
-                                          </div>
-                                        )}
-                                      </div>
-                                    </div>
-                                  </div>
-                                )}
-                              </DialogContent>
-                            </Dialog>
-                            
-                            {ticket.pdf_path && (
-                              <Button 
-                                variant="default" 
-                                size="sm" 
-                                className="rounded-full"
-                                onClick={() => handleDownloadPDF(ticket.id)}
-                              >
-                                <Download className="h-4 w-4 mr-1" />
-                                PDF
-                              </Button>
-                            )}
-                          </div>
-                        </TableCell>
-                      </TableRow>
-                    );
-                  })}
-                </TableBody>
-              </Table>
+      {/* Tickets Section */}
+      <section className="py-16 lg:py-24">
+        <div className="container mx-auto px-6 lg:px-8">
+          {tickets.length === 0 ? (
+            <div className="text-center py-16">
+              <Ticket className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
+              <h3 className="text-2xl font-semibold text-muted-foreground mb-4">
+                No tickets yet
+              </h3>
+              <p className="text-muted-foreground mb-6">
+                You haven&apos;t booked any events yet. Explore our upcoming events!
+              </p>
+              <Button onClick={() => router.push('/events')}>
+                Browse Events
+              </Button>
             </div>
-          </CardContent>
-        </Card>
-      )}
-    </div>
+          ) : (
+            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+              {tickets.map((ticket) => (
+                <Card key={ticket.id} className="overflow-hidden hover:shadow-lg transition-shadow">
+                  <CardHeader className="pb-4">
+                    <div className="flex items-center justify-between mb-2">
+                      <Badge className={getStatusColor(ticket.status)}>
+                        {ticket.status}
+                      </Badge>
+                      <Badge variant="outline" className={getEventStatusColor(ticket.event.status)}>
+                        {ticket.event.status}
+                      </Badge>
+                    </div>
+                    
+                    <CardTitle className="line-clamp-2">
+                      Event Ticket
+                    </CardTitle>
+                    
+                    <CardDescription className="line-clamp-2">
+                      Your reserved ticket for this event
+                    </CardDescription>
+                  </CardHeader>
+                  
+                  <CardContent className="space-y-4">
+                    {/* Event Image */}
+                    {ticket.event.image_url && (
+                      <div className="aspect-video overflow-hidden rounded-lg mb-4">
+                        <img
+                          src={ticket.event.image_url}
+                          alt="Event"
+                          className="w-full h-full object-cover"
+                        />
+                      </div>
+                    )}
+
+                    {/* Ticket Info */}
+                    <div className="space-y-2">
+                      <p className="text-sm text-muted-foreground">
+                        Ticket ID: <span className="font-mono">{ticket.id.slice(0, 8)}...</span>
+                      </p>
+                      <p className="text-sm text-muted-foreground">
+                        Booked: {formatDate(ticket.created_at)}
+                      </p>
+                    </div>
+
+                    {/* Actions */}
+                    <div className="flex flex-col gap-2 pt-2">
+                      {ticket.status === 'RESERVED' && (
+                        <>
+                          <Button
+                            onClick={() => handleDownloadTicket(ticket)}
+                            className="w-full"
+                          >
+                            <Download className="h-4 w-4 mr-2" />
+                            Download Ticket
+                          </Button>
+                          
+                          <Button
+                            variant="outline"
+                            onClick={() => handleCancelTicket(ticket.id)}
+                            className="w-full text-red-600 border-red-200 hover:bg-red-50"
+                          >
+                            Cancel Ticket
+                          </Button>
+                        </>
+                      )}
+                      
+                      {ticket.status === 'CANCELLED' && (
+                        <Button disabled className="w-full">
+                          Ticket Cancelled
+                        </Button>
+                      )}
+                      
+                      {ticket.status === 'CONFIRMED' && (
+                        <Button disabled className="w-full bg-blue-600 hover:bg-blue-600">
+                          ✓ Confirmed
+                        </Button>
+                      )}
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          )}
+        </div>
+      </section>
+
+      <Footer />
+    </main>
   );
 }

@@ -1,283 +1,225 @@
-import { supabaseAdmin } from './supabaseAdmin';
-import type { DatabaseTypes } from './supabase';
+import { supabase, Database } from './supabaseClient';
 
-type User = DatabaseTypes['public']['Tables']['users']['Row'];
-type Event = DatabaseTypes['public']['Tables']['events']['Row'];
-type Ticket = DatabaseTypes['public']['Tables']['tickets']['Row'];
-type Certificate = DatabaseTypes['public']['Tables']['certificates']['Row'];
-type CertificateRequest = DatabaseTypes['public']['Tables']['certificate_requests']['Row'];
+// Type aliases for cleaner code
+type Event = Database['public']['Tables']['events']['Row'];
+type EventWithTicketCount = Event & { ticket_count?: number; user_has_ticket?: boolean };
+type Ticket = Database['public']['Tables']['tickets']['Row'];
+type TicketWithEvent = Ticket & { event: Event };
 
-// Simple function to ensure user exists in database
-export async function ensureUser(clerkUserId: string): Promise<User | null> {
-  if (!clerkUserId) {
-    console.error('Clerk user ID is required');
-    return null;
+/**
+ * Fetch all events with real-time subscription
+ */
+export async function getEvents(): Promise<Event[]> {
+  const { data, error } = await supabase
+    .from('events')
+    .select('*')
+    .order('starts_at', { ascending: true });
+
+  if (error) {
+    console.error('Error fetching events:', error);
+    throw new Error('Failed to fetch events');
   }
 
-  const sb = supabaseAdmin();
+  return data || [];
+}
 
-  // Check if user exists
-  const { data: existingUser } = await sb
-    .from('users')
+/**
+ * Get events with ticket count and user booking status
+ */
+export async function getEventsWithTicketInfo(clerkUserId?: string): Promise<EventWithTicketCount[]> {
+  // First get all events
+  const { data: events, error } = await supabase
+    .from('events')
     .select('*')
-    .eq('id', clerkUserId)
+    .order('starts_at', { ascending: true });
+
+  if (error) {
+    console.error('Error fetching events:', error);
+    throw new Error('Failed to fetch events');
+  }
+
+  if (!events) return [];
+
+  // Get ticket counts for each event
+  const eventsWithCounts = await Promise.all(
+    events.map(async (event) => {
+      const { count } = await supabase
+        .from('tickets')
+        .select('*', { count: 'exact', head: true })
+        .eq('event_id', event.id);
+
+      return {
+        ...event,
+        ticket_count: count || 0,
+      };
+    })
+  );
+
+  // If user is authenticated, check which events they've booked
+  if (clerkUserId) {
+    const { data: userTickets } = await supabase
+      .from('tickets')
+      .select('event_id')
+      .eq('user_id', clerkUserId);
+
+    const userEventIds = new Set(userTickets?.map(t => t.event_id) || []);
+
+    return eventsWithCounts.map(event => ({
+      ...event,
+      user_has_ticket: userEventIds.has(event.id),
+    }));
+  }
+
+  return eventsWithCounts;
+}
+
+/**
+ * Book a ticket for an event
+ */
+export async function bookTicket(clerkUserId: string, eventId: string): Promise<Ticket> {
+  // First check if user already has a ticket
+  const { data: existingTicket } = await supabase
+    .from('tickets')
+    .select('id')
+    .eq('user_id', clerkUserId)
+    .eq('event_id', eventId)
     .single();
 
-  if (existingUser) {
-    return existingUser;
+  if (existingTicket) {
+    throw new Error('DUPLICATE_BOOKING');
   }
 
-  // Create user if doesn't exist
-  const { data: newUser, error } = await sb
-    .from('users')
-    .insert({ 
-      id: clerkUserId,
-      email: '',
-      created_at: new Date().toISOString()
+  // Check event capacity
+  const { data: event, error: eventError } = await supabase
+    .from('events')
+    .select('capacity, title')
+    .eq('id', eventId)
+    .single();
+
+  if (eventError) {
+    throw new Error('Event not found');
+  }
+
+  if (event.capacity) {
+    // Count existing tickets for this event
+    const { count: ticketCount, error: countError } = await supabase
+      .from('tickets')
+      .select('*', { count: 'exact', head: true })
+      .eq('event_id', eventId);
+
+    if (countError) {
+      throw new Error('Failed to check capacity');
+    }
+
+    if (ticketCount && ticketCount >= event.capacity) {
+      throw new Error('EVENT_FULL');
+    }
+  }
+
+  // Insert the ticket
+  const { data, error } = await supabase
+    .from('tickets')
+    .insert({
+      user_id: clerkUserId,
+      event_id: eventId,
+      status: 'RESERVED',
     })
     .select()
     .single();
 
   if (error) {
-    console.error('Error creating user:', error);
-    return null;
+    console.error('Error booking ticket:', error);
+    
+    // Handle specific error types
+    if (error.code === '23505') { // Unique constraint violation
+      throw new Error('DUPLICATE_BOOKING');
+    }
+    
+    throw new Error('Failed to book ticket');
   }
 
-  console.log('Created new user:', clerkUserId);
-  return newUser;
+  return data;
 }
 
-// Get user tickets with event details - SIMPLIFIED
-export async function getUserTickets(clerkUserId: string) {
-  if (!clerkUserId) {
-    console.error('Clerk user ID is required');
-    return [];
+/**
+ * Get user's tickets with event details
+ */
+export async function getUserTickets(clerkUserId: string): Promise<TicketWithEvent[]> {
+  const { data, error } = await supabase
+    .from('tickets')
+    .select(`
+      *,
+      event:events(*)
+    `)
+    .eq('user_id', clerkUserId)
+    .order('created_at', { ascending: false });
+
+  if (error) {
+    console.error('Error fetching user tickets:', error);
+    throw new Error('Failed to fetch tickets');
   }
 
-  try {
-    // Ensure user exists
-    await ensureUser(clerkUserId);
-
-    const sb = supabaseAdmin();
-    const { data, error } = await sb
-      .from('tickets')
-      .select(`
-        id,
-        status,
-        ticket_type,
-        booking_id,
-        qr_code,
-        qr_payload,
-        pdf_path,
-        created_at,
-        events (
-          id,
-          title,
-          venue,
-          event_date
-        )
-      `)
-      .eq('user_id', clerkUserId)
-      .order('created_at', { ascending: false });
-
-    if (error) {
-      console.error('Error fetching tickets:', error);
-      return [];
-    }
-
-    console.log(`✅ Found ${data?.length || 0} tickets for user ${clerkUserId}`);
-    return data || [];
-  } catch (error) {
-    console.error('Error in getUserTickets:', error);
-    return [];
-  }
+  return (data || []) as TicketWithEvent[];
 }
 
-// Get user certificates with event details
-export async function getUserCertificates(clerkUserId: string) {
-  if (!clerkUserId) {
-    console.error('clerkUserId is required');
-    return [];
-  }
+/**
+ * Subscribe to events table changes
+ */
+export function subscribeToEvents(callback: (payload: any) => void) {
+  const subscription = supabase
+    .channel('events_changes')
+    .on(
+      'postgres_changes',
+      {
+        event: '*',
+        schema: 'public',
+        table: 'events'
+      },
+      callback
+    )
+    .subscribe();
 
-  try {
-    const sb = supabaseAdmin();
-    const { data, error } = await sb
-      .from('certificates')
-      .select(`
-        *,
-        events (
-          id,
-          title,
-          event_date
-        )
-      `)
-      .eq('user_id', clerkUserId)
-      .order('issued_date', { ascending: false });
-
-    if (error) {
-      console.error('Error fetching certificates:', error);
-      return [];
-    }
-
-    return data || [];
-  } catch (error) {
-    console.error('Error in getUserCertificates:', error);
-    return [];
-  }
+  return () => {
+    subscription.unsubscribe();
+  };
 }
 
-// Get events user can request certificates for
-export async function getEligibleCertificateEvents(clerkUserId: string) {
-  if (!clerkUserId) {
-    console.error('clerkUserId is required');
-    return [];
-  }
+/**
+ * Subscribe to tickets table changes for a specific user
+ */
+export function subscribeToUserTickets(clerkUserId: string, callback: (payload: any) => void) {
+  const subscription = supabase
+    .channel(`user_tickets_${clerkUserId}`)
+    .on(
+      'postgres_changes',
+      {
+        event: '*',
+        schema: 'public',
+        table: 'tickets',
+        filter: `user_id=eq.${clerkUserId}`
+      },
+      callback
+    )
+    .subscribe();
 
-  try {
-    const sb = supabaseAdmin();
-    // Get events user attended (has tickets) but doesn't have certificates for
-    const { data, error } = await sb
-      .from('events')
-      .select(`
-        id,
-        title,
-        event_date
-        status
-      `)
-      .eq('status', 'completed')
-      .not('id', 'in', `(
-        SELECT event_id FROM certificates WHERE user_id = '${clerkUserId}'
-        UNION
-        SELECT event_id FROM certificate_requests WHERE user_id = '${clerkUserId}' AND status != 'rejected'
-      )`);
-
-    if (error) {
-      console.error('Error fetching eligible events:', error);
-      return [];
-    }
-
-    // Filter events where user has tickets
-    const eventsWithTickets = [];
-    for (const event of data || []) {
-      const { data: tickets } = await sb
-        .from('tickets')
-        .select('id')
-        .eq('user_id', clerkUserId)
-        .eq('event_id', event.id)
-        .eq('status', 'confirmed');
-
-      if (tickets && tickets.length > 0) {
-        eventsWithTickets.push(event);
-      }
-    }
-
-    return eventsWithTickets;
-  } catch (error) {
-    console.error('Error in getEligibleCertificateEvents:', error);
-    return [];
-  }
+  return () => {
+    subscription.unsubscribe();
+  };
 }
 
-// Get user certificate requests with event details
-export async function getUserCertificateRequests(clerkUserId: string) {
-  if (!clerkUserId) {
-    console.error('clerkUserId is required');
-    return [];
+/**
+ * Get ticket count for a specific event
+ */
+export async function getEventTicketCount(eventId: string): Promise<number> {
+  const { count, error } = await supabase
+    .from('tickets')
+    .select('*', { count: 'exact', head: true })
+    .eq('event_id', eventId);
+
+  if (error) {
+    console.error('Error getting ticket count:', error);
+    return 0;
   }
 
-  try {
-    const sb = supabaseAdmin();
-    const { data, error } = await sb
-      .from('certificate_requests')
-      .select(`
-        *,
-        events (
-          id,
-          title,
-          event_date
-        )
-      `)
-      .eq('user_id', clerkUserId)
-      .order('requested_date', { ascending: false });
-
-    if (error) {
-      console.error('Error fetching certificate requests:', error);
-      return [];
-    }
-
-    return data || [];
-  } catch (error) {
-    console.error('Error in getUserCertificateRequests:', error);
-    return [];
-  }
-}
-
-// Create certificate request
-export async function createCertificateRequest(clerkUserId: string, eventId: string) {
-  if (!clerkUserId) {
-    console.error('clerkUserId is required');
-    return null;
-  }
-
-  try {
-    const sb = supabaseAdmin();
-    const { data, error } = await sb
-      .from('certificate_requests')
-      .insert({
-        user_id: clerkUserId,
-        event_id: eventId,
-        requested_date: new Date().toISOString().split('T')[0],
-        status: 'pending'
-      })
-      .select()
-      .single();
-
-    if (error) {
-      console.error('Error creating certificate request:', error);
-      return null;
-    }
-
-    return data;
-  } catch (error) {
-    console.error('Error in createCertificateRequest:', error);
-    return null;
-  }
-}
-
-// Get single ticket with QR code
-export async function getTicketWithQR(ticketId: string, clerkUserId: string) {
-  if (!clerkUserId) {
-    console.error('clerkUserId is required');
-    return null;
-  }
-
-  try {
-    const sb = supabaseAdmin();
-    const { data, error } = await sb
-      .from('tickets')
-      .select(`
-        *,
-        events (
-          id,
-          title,
-          venue,
-          event_type,
-          event_date
-        )
-      `)
-      .eq('id', ticketId)
-      .eq('user_id', clerkUserId)
-      .single();
-
-    if (error) {
-      console.error('Error fetching ticket:', error);
-      return null;
-    }
-
-    return data;
-  } catch (error) {
-    console.error('Error in getTicketWithQR:', error);
-    return null;
-  }
+  return count || 0;
 }

@@ -9,13 +9,15 @@ export default authMiddleware({
     "/contact", 
     "/sign-in", 
     "/sign-up",
-    "/success"
+    "/success",
+    "/api/events"  // Allow public access to events API
   ],
   // Routes to ignore Clerk authentication completely
   ignoredRoutes: [
     "/((?!api|trpc))(_next.*|.+\\.\\w+$)", 
     "/sign-in", 
-    "/sign-up"
+    "/sign-up",
+    "/api/events"  // Allow access to events API without auth
   ],
   // Custom afterAuth to prevent automatic redirects
   afterAuth(auth, req, evt) {
