@@ -5,76 +5,77 @@ import { Badge } from '@/components/ui/badge';
 import { ArrowRight, Users, Trophy, Rocket, Calendar, MapPin, Clock } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
+import { useAuth, useClerk } from '@clerk/nextjs';
+import { useRouter } from 'next/navigation';
 
 const initiatives = [
   {
     id: 1,
-    title: 'Campus Ambassadors',
-    description: 'Lead tech innovation at your university. Build communities, organize events, and connect with like-minded peers across the globe.',
+    title: 'PPT Workshop',
+    description: 'Master the art of creating compelling presentations. Learn advanced techniques, design principles, and storytelling methods.',
     image: 'https://images.pexels.com/photos/7688344/pexels-photo-7688344.jpeg?auto=compress&cs=tinysrgb&w=800&h=600&fit=crop',
     icon: Users,
-    stats: '2,500+ Ambassadors',
-    badge: 'Leadership Program',
-    href: '/programs/ambassadors',
-    features: ['Monthly Workshops', 'Networking Events', 'Certification Program', 'Mentorship Access']
+    stats: 'Available Now',
+    badge: 'Workshop',
+    href: '/workshops/ppt',
+    features: ['Presentation Design', 'Storytelling Techniques', 'Professional Templates', 'Interactive Sessions'],
+    isAvailable: true
   },
   {
     id: 2,
-    title: 'Innovation Summit',
-    description: 'The flagship event bringing together visionary speakers, cutting-edge workshops, and the next generation of tech innovators.',
-    image: 'https://images.pexels.com/photos/2774556/pexels-photo-2774556.jpeg?auto=compress&cs=tinysrgb&w=800&h=600&fit=crop',
+    title: 'Web Development Workshop',
+    description: 'Coming Soon - Learn modern web development with React, Next.js, and cutting-edge technologies.',
+    image: '/website-images/Coming-Soon.png',
     icon: Rocket,
-    stats: '25,000+ Attendees',
-    badge: 'Annual Event',
-    href: '/summit',
-    features: ['World-Class Speakers', 'Tech Exhibitions', 'Startup Pitches', 'Networking Sessions']
+    stats: 'Coming Soon',
+    badge: 'Workshop',
+    href: '#',
+    features: ['Coming Soon', 'Stay Tuned', 'Exciting Content', 'Amazing Experience'],
+    isAvailable: false
   },
   {
     id: 3,
-    title: 'Summit Chapters',
-    description: 'Local communities driving tech education forward. Experience hands-on learning through regional events and collaborative projects.',
-    image: 'https://images.pexels.com/photos/3183150/pexels-photo-3183150.jpeg?auto=compress&cs=tinysrgb&w=800&h=600&fit=crop',
+    title: 'AI/ML Workshop',
+    description: 'Coming Soon - Dive into artificial intelligence and machine learning fundamentals and applications.',
+    image: '/website-images/Coming-Soon.png',
     icon: MapPin,
-    stats: '150+ Chapters',
-    badge: 'Community Initiative',
-    href: '/programs/chapters',
-    features: ['Local Meetups', 'Skill Development', 'Project Collaborations', 'Industry Connections']
+    stats: 'Coming Soon',
+    badge: 'Workshop',
+    href: '#',
+    features: ['Coming Soon', 'Stay Tuned', 'Exciting Content', 'Amazing Experience'],
+    isAvailable: false
   },
   {
     id: 4,
-    title: 'Tech Competitions',
-    description: 'Showcase your skills and compete with the best minds in technology. From hackathons to innovation challenges.',
-    image: 'https://images.pexels.com/photos/3861969/pexels-photo-3861969.jpeg?auto=compress&cs=tinysrgb&w=800&h=600&fit=crop',
+    title: 'Entrepreneurship Workshop',
+    description: 'Coming Soon - Build your startup from idea to execution with expert guidance and mentorship.',
+    image: '/website-images/Coming-Soon.png',
     icon: Trophy,
-    stats: '$100K+ Prizes',
-    badge: 'Competitions',
-    href: '/programs/competitions',
-    features: ['Hackathons', 'Innovation Challenges', 'Startup Competitions', 'Skill Contests']
-  }
-];
-
-const upcomingEvents = [
-  {
-    title: 'AI Workshop Series',
-    date: 'Jan 25, 2024',
-    time: '2:00 PM IST',
-    type: 'Workshop'
-  },
-  {
-    title: 'Startup Pitch Night',
-    date: 'Feb 10, 2024',
-    time: '6:00 PM IST',
-    type: 'Competition'
-  },
-  {
-    title: 'Innovation Summit 2024',
-    date: 'Mar 15-17, 2024',
-    time: 'All Day',
-    type: 'Summit'
+    stats: 'Coming Soon',
+    badge: 'Workshop',
+    href: '#',
+    features: ['Coming Soon', 'Stay Tuned', 'Exciting Content', 'Amazing Experience'],
+    isAvailable: false
   }
 ];
 
 export default function InitiativesShowcase() {
+  const { isSignedIn } = useAuth();
+  const { openSignIn } = useClerk();
+  const router = useRouter();
+
+  const handleWorkshopClick = (initiative: any) => {
+    if (initiative.isAvailable) {
+      if (isSignedIn) {
+        // Redirect to workshop page (will be built later)
+        router.push(initiative.href);
+      } else {
+        // Open sign-in modal
+        openSignIn();
+      }
+    }
+  };
+
   return (
     <section className="py-16 lg:py-24 bg-muted/30">
       <div className="container mx-auto px-6 lg:px-8">
@@ -97,174 +98,253 @@ export default function InitiativesShowcase() {
           </p>
         </div>
 
-        {/* Initiatives Grid */}
+        {/* Workshop Cards - Full Image Design */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-16">
-          {initiatives.map((initiative) => {
-            const Icon = initiative.icon;
-            return (
-              <div
-                key={initiative.id}
-                className="group bg-background rounded-2xl border border-border hover:border-primary/30 transition-all duration-300 overflow-hidden"
-              >
-                {/* Image Section */}
-                <div className="relative h-48 overflow-hidden">
-                  <Image
-                    src={initiative.image}
-                    alt={initiative.title}
-                    fill
-                    className="object-cover transition-transform duration-300 group-hover:scale-105"
-                    sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 25vw"
-                  />
+          {initiatives.map((initiative) => (
+            <div
+              key={initiative.id}
+              className="relative h-96 rounded-2xl overflow-hidden cursor-pointer"
+              onClick={() => handleWorkshopClick(initiative)}
+            >
+              {/* Full Background Image */}
+              <Image
+                src={initiative.image}
+                alt={initiative.title}
+                fill
+                className="object-cover"
+                sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 25vw"
+              />
 
-                  {/* Icon */}
-                  <div className="absolute bottom-4 left-4">
-                    <div className="w-10 h-10 rounded-lg bg-gradient-to-r from-primary to-primary/80 flex items-center justify-center">
-                      <Icon className="h-5 w-5 text-white" />
-                    </div>
-                  </div>
-                </div>
+              {/* Gradient Overlay */}
+              <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent"></div>
 
-                {/* Content Section */}
-                <div className="p-5">
-                  <h3 className="text-lg font-bold text-foreground mb-2 line-clamp-1">
-                    {initiative.title}
-                  </h3>
-
-                  <p className="text-sm text-muted-foreground mb-4 leading-relaxed line-clamp-2">
-                    {initiative.description}
-                  </p>
-
-                  {/* Features */}
-                  <div className="space-y-1 mb-4">
-                    {initiative.features.slice(0, 2).map((feature) => (
-                      <div key={feature} className="flex items-center text-xs text-muted-foreground">
-                        <div className="w-1.5 h-1.5 bg-primary rounded-full mr-2 flex-shrink-0"></div>
-                        <span className="truncate">{feature}</span>
-                      </div>
-                    ))}
-                  </div>
-
-                  <Button asChild size="sm" className="w-full text-xs group/btn">
-                    <Link href={initiative.href}>
-                      Explore More
-                      <ArrowRight className="h-3 w-3 ml-2 transition-transform group-hover/btn:translate-x-1" />
-                    </Link>
+              {/* Content Overlay - Only Button */}
+              <div className="absolute inset-0 flex flex-col justify-end p-6">
+                {/* Button */}
+                {initiative.isAvailable ? (
+                  <Button 
+                    className="w-full bg-white text-black hover:bg-white/90 font-medium"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleWorkshopClick(initiative);
+                    }}
+                  >
+                    Learn
                   </Button>
-                </div>
+                ) : (
+                  <Button 
+                    disabled
+                    className="w-full bg-white/20 text-white border border-white/30 hover:bg-white/20 font-medium cursor-not-allowed"
+                  >
+                    Coming Soon
+                  </Button>
+                )}
               </div>
-            );
-          })}
+            </div>
+          ))}
         </div>
 
-        {/* Upcoming Events - Ticket Style */}
-        <div className="max-w-6xl mx-auto">
+        {/* Upcoming Events - Carousel Style */}
+        <div className="max-w-7xl mx-auto mt-32">
           <div className="text-center mb-12">
-            <h3 className="text-2xl md:text-3xl font-bold text-foreground mb-3">Upcoming Events</h3>
-            <p className="text-muted-foreground text-lg">Don't miss these exciting opportunities to connect and learn.</p>
+            <h3 className="text-2xl md:text-3xl font-bold text-foreground mb-3">Our Event Diaries</h3>
+            <p className="text-muted-foreground text-lg">Experience our vibrant community through events and moments.</p>
           </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
-            {upcomingEvents.map((event, index) => (
-              <div
-                key={index}
-                className="group bg-background border border-border rounded-2xl overflow-hidden hover:border-primary/30 hover:shadow-lg transition-all duration-300 relative"
-              >
-                {/* Left semi-circular cutouts */}
-                <div className="hidden md:block absolute left-0 top-2 w-4 h-8 bg-background rounded-r-full border border-border border-l-0 z-10"></div>
-                <div className="hidden md:block absolute left-0 top-1/2 -translate-y-1/2 w-4 h-8 bg-background rounded-r-full border border-border border-l-0 z-10"></div>
-                <div className="hidden md:block absolute left-0 bottom-2 w-4 h-8 bg-background rounded-r-full border border-border border-l-0 z-10"></div>
-                {/* Right triangular cutouts */}
-                <div className="hidden md:block absolute right-0 top-4 w-0 h-0 border-l-[8px] border-l-background border-t-[6px] border-t-transparent border-b-[6px] border-b-transparent z-10"></div>
-                <div className="hidden md:block absolute right-0 top-1/2 -translate-y-1/2 w-0 h-0 border-l-[8px] border-l-background border-t-[6px] border-t-transparent border-b-[6px] border-b-transparent z-10"></div>
-                <div className="hidden md:block absolute right-0 bottom-4 w-0 h-0 border-l-[8px] border-l-background border-t-[6px] border-t-transparent border-b-[6px] border-b-transparent z-10"></div>
-                {/* Additional smaller triangular cutouts for more detail */}
-                <div className="hidden md:block absolute right-0 top-8 w-0 h-0 border-l-[6px] border-l-background border-t-[4px] border-t-transparent border-b-[4px] border-b-transparent z-10"></div>
-                <div className="hidden md:block absolute right-0 bottom-8 w-0 h-0 border-l-[6px] border-l-background border-t-[4px] border-t-transparent border-b-[4px] border-b-transparent z-10"></div>
-
-                {/* Mobile: Stacked Layout */}
-                <div className="block md:hidden">
-                  {/* Image Section - Mobile */}
-                  <div className="relative h-36 bg-gradient-to-br from-primary/10 to-primary/5">
-                    <div className="absolute inset-0 flex items-center justify-center">
-                      <Calendar className="h-12 w-12 text-primary/30" />
-                    </div>
-                    {/* Event Type Badge */}
-                    <div className="absolute top-3 right-3">
-                      <div className="px-2 py-1 bg-primary/10 rounded-md">
-                        <span className="text-xs font-medium text-primary">{event.type}</span>
-                      </div>
-                    </div>
-                  </div>
-                  
-                  {/* Content Section - Mobile */}
-                  <div className="p-5">
-                    <h4 className="font-bold text-foreground mb-2 text-base leading-tight">
-                      {event.title}
-                    </h4>
-                    <div className="space-y-1">
-                      <div className="flex items-center text-sm text-muted-foreground">
-                        <Calendar className="h-4 w-4 mr-2 text-primary" />
-                        <span>{event.date}</span>
-                      </div>
-                      <div className="flex items-center text-sm text-muted-foreground">
-                        <Clock className="h-4 w-4 mr-2 text-primary" />
-                        <span>{event.time}</span>
-                      </div>
-                    </div>
-                  </div>
+          {/* Event Media Carousel */}
+          <div className="relative overflow-hidden">
+            {/* Fade Effects */}
+            <div className="absolute left-0 top-0 bottom-0 w-20 bg-gradient-to-r from-muted/30 to-transparent z-10 pointer-events-none"></div>
+            <div className="absolute right-0 top-0 bottom-0 w-20 bg-gradient-to-l from-muted/30 to-transparent z-10 pointer-events-none"></div>
+            
+            {/* Scrolling Container */}
+            <div className="flex gap-6 animate-scroll">
+              {/* First set of media */}
+              <div className="flex gap-6 min-w-max">
+                <div className="w-64 h-64 rounded-xl overflow-hidden flex-shrink-0">
+                  <Image
+                    src="/Event-images/img-1.jpeg"
+                    alt="Event 1"
+                    width={256}
+                    height={256}
+                    className="w-full h-full object-cover"
+                  />
                 </div>
-
-                {/* Desktop: Ticket Layout */}
-                <div className="hidden md:flex h-28">
-                  {/* Left Section - Image Area (40%) */}
-                  <div className="relative w-2/5 bg-gradient-to-br from-primary/10 to-primary/5 rounded-l-2xl flex items-center justify-center">
-                    <Calendar className="h-8 w-8 text-primary/40" />
-                    {/* Event Type Badge */}
-                    <div className="absolute top-2 right-2">
-                      <div className="px-2 py-1 bg-primary/15 rounded text-xs font-medium text-primary">
-                        {event.type}
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Dotted Tear Line */}
-                  <div className="relative w-px">
-                    <div className="absolute inset-0 border-l-2 border-dotted border-border"></div>
-                    {/* Ticket holes */}
-                    <div className="absolute -top-2 -left-1 w-2 h-2 bg-muted/30 rounded-full"></div>
-                    <div className="absolute top-1/2 -translate-y-1/2 -left-1 w-2 h-2 bg-muted/30 rounded-full"></div>
-                    <div className="absolute -bottom-2 -left-1 w-2 h-2 bg-muted/30 rounded-full"></div>
-                  </div>
-
-                  {/* Right Section - Event Details (60%) */}
-                  <div className="flex-1 p-5 rounded-r-2xl flex flex-col justify-center">
-                    <h4 className="font-bold text-foreground mb-2 text-base leading-tight line-clamp-1">
-                      {event.title}
-                    </h4>
-                    
-                    <div className="space-y-1">
-                      <div className="flex items-center text-sm text-muted-foreground">
-                        <Calendar className="h-4 w-4 mr-2 text-primary flex-shrink-0" />
-                        <span className="truncate">{event.date}</span>
-                      </div>
-                      <div className="flex items-center text-sm text-muted-foreground">
-                        <Clock className="h-4 w-4 mr-2 text-primary flex-shrink-0" />
-                        <span className="truncate">{event.time}</span>
-                      </div>
-                    </div>
-                  </div>
+                
+                <div className="w-64 h-64 rounded-xl overflow-hidden flex-shrink-0">
+                  <Image
+                    src="/Event-images/img-2.jpeg"
+                    alt="Event 2"
+                    width={256}
+                    height={256}
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+                
+                <div className="w-64 h-64 rounded-xl overflow-hidden flex-shrink-0">
+                  <video
+                    src="/Event-images/vid-1.mp4"
+                    autoPlay
+                    loop
+                    muted
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+                
+                <div className="w-64 h-64 rounded-xl overflow-hidden flex-shrink-0">
+                  <Image
+                    src="/Event-images/img-3.jpeg"
+                    alt="Event 3"
+                    width={256}
+                    height={256}
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+                
+                <div className="w-64 h-64 rounded-xl overflow-hidden flex-shrink-0">
+                  <Image
+                    src="/Event-images/img-4.jpeg"
+                    alt="Event 4"
+                    width={256}
+                    height={256}
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+                
+                <div className="w-64 h-64 rounded-xl overflow-hidden flex-shrink-0">
+                  <video
+                    src="/Event-images/vid-2.mp4"
+                    autoPlay
+                    loop
+                    muted
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+                
+                <div className="w-64 h-64 rounded-xl overflow-hidden flex-shrink-0">
+                  <Image
+                    src="/Event-images/img-5.jpg"
+                    alt="Event 5"
+                    width={256}
+                    height={256}
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+                
+                <div className="w-64 h-64 rounded-xl overflow-hidden flex-shrink-0">
+                  <Image
+                    src="/Event-images/img-6.JPG"
+                    alt="Event 6"
+                    width={256}
+                    height={256}
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+                
+                <div className="w-64 h-64 rounded-xl overflow-hidden flex-shrink-0">
+                  <Image
+                    src="/Event-images/img-7.jpg"
+                    alt="Event 7"
+                    width={256}
+                    height={256}
+                    className="w-full h-full object-cover"
+                  />
                 </div>
               </div>
-            ))}
-          </div>
-
-          <div className="text-center mt-10">
-            <Button variant="outline" asChild className="px-6 py-3">
-              <Link href="/events">
-                View All Events
-                <Calendar className="h-4 w-4 ml-2" />
-              </Link>
-            </Button>
+              
+              {/* Duplicate set for seamless loop */}
+              <div className="flex gap-6 min-w-max">
+                <div className="w-64 h-64 rounded-xl overflow-hidden flex-shrink-0">
+                  <Image
+                    src="/Event-images/img-1.jpeg"
+                    alt="Event 1"
+                    width={256}
+                    height={256}
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+                
+                <div className="w-64 h-64 rounded-xl overflow-hidden flex-shrink-0">
+                  <Image
+                    src="/Event-images/img-2.jpeg"
+                    alt="Event 2"
+                    width={256}
+                    height={256}
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+                
+                <div className="w-64 h-64 rounded-xl overflow-hidden flex-shrink-0">
+                  <video
+                    src="/Event-images/vid-1.mp4"
+                    autoPlay
+                    loop
+                    muted
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+                
+                <div className="w-64 h-64 rounded-xl overflow-hidden flex-shrink-0">
+                  <Image
+                    src="/Event-images/img-3.jpeg"
+                    alt="Event 3"
+                    width={256}
+                    height={256}
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+                
+                <div className="w-64 h-64 rounded-xl overflow-hidden flex-shrink-0">
+                  <Image
+                    src="/Event-images/img-4.jpeg"
+                    alt="Event 4"
+                    width={256}
+                    height={256}
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+                
+                <div className="w-64 h-64 rounded-xl overflow-hidden flex-shrink-0">
+                  <video
+                    src="/Event-images/vid-2.mp4"
+                    autoPlay
+                    loop
+                    muted
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+                
+                <div className="w-64 h-64 rounded-xl overflow-hidden flex-shrink-0">
+                  <Image
+                    src="/Event-images/img-5.HEIC"
+                    alt="Event 5"
+                    width={256}
+                    height={256}
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+                
+                <div className="w-64 h-64 rounded-xl overflow-hidden flex-shrink-0">
+                  <Image
+                    src="/Event-images/img-6.JPG"
+                    alt="Event 6"
+                    width={256}
+                    height={256}
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+                
+                <div className="w-64 h-64 rounded-xl overflow-hidden flex-shrink-0">
+                  <Image
+                    src="/Event-images/img-7.HEIC"
+                    alt="Event 7"
+                    width={256}
+                    height={256}
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </div>

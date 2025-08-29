@@ -182,24 +182,24 @@ export default function TeamSection() {
           </div>
         </div>
 
-        {/* Join Team CTA */}
+        {/* Sponsor CTA */}
         <div className="max-w-2xl mx-auto text-center p-8 rounded-2xl bg-gradient-to-r from-primary/10 via-primary/5 to-primary/10 border mt-16">
           <h3 className="text-xl font-semibold text-foreground mb-3">
-            Join Our Mission
+            Want to Become Our Sponsor?
           </h3>
           <p className="text-muted-foreground mb-6 leading-relaxed">
-            We're always looking for passionate individuals who want to shape the future of 
-            technology education. Explore opportunities to make an impact.
+            Partner with us to empower the next generation of entrepreneurs and innovators. 
+            Join leading companies in supporting cutting-edge education and startup development.
           </p>
           <div className="flex flex-col sm:flex-row gap-3 justify-center">
             <Button asChild>
-              <Link href="/careers">
-                View Open Positions
+              <Link href="/sponsors">
+                Explore More
                 <ArrowRight className="h-4 w-4 ml-2" />
               </Link>
             </Button>
             <Button variant="outline" asChild>
-              <Link href="/team">View Full Team</Link>
+              <Link href="/contact">Contact Our Team</Link>
             </Button>
           </div>
         </div>
