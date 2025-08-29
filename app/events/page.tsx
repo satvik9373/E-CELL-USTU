@@ -22,11 +22,17 @@ type EventWithBookingStatus = {
 export default function EventsPage() {
   const [events, setEvents] = useState<EventWithBookingStatus[]>([]);
   const [loading, setLoading] = useState(true);
+  const [mounted, setMounted] = useState(false);
   const [bookingEventId, setBookingEventId] = useState<string | null>(null);
   const { isSignedIn, userId: clerkUserId } = useAuth();
   const { openSignIn } = useClerk();
   const { toast } = useToast();
   const router = useRouter();
+
+  // Ensure component is mounted to prevent hydration issues
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   // Add test events function
   const addTestEvents = async () => {
@@ -365,7 +371,7 @@ export default function EventsPage() {
                 Browse Events
                 <ArrowRight className="ml-2 h-5 w-5" />
               </Button>
-              {!isSignedIn && (
+              {mounted && !isSignedIn && (
                 <Button 
                   variant="outline" 
                   size="lg" 
@@ -443,7 +449,7 @@ export default function EventsPage() {
                         </Button>
                       )}
                       
-                      {!isSignedIn && (
+                      {mounted && !isSignedIn && (
                         <p className="text-xs text-muted-foreground text-center">
                           Sign in required to book tickets
                         </p>

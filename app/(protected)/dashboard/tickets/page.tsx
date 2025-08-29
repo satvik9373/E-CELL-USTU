@@ -21,9 +21,15 @@ type TicketWithEvent = Ticket & {
 export default function TicketDashboard() {
   const [tickets, setTickets] = useState<TicketWithEvent[]>([]);
   const [loading, setLoading] = useState(true);
+  const [mounted, setMounted] = useState(false);
   const { isSignedIn, userId: clerkUserId } = useAuth();
   const { toast } = useToast();
   const router = useRouter();
+
+  // Ensure component is mounted to prevent hydration issues
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   // Extract loadUserTickets to be reusable
   const loadUserTickets = async () => {
@@ -71,22 +77,22 @@ export default function TicketDashboard() {
 
   // Redirect if not signed in
   useEffect(() => {
-    if (!isSignedIn) {
+    if (mounted && !isSignedIn) {
       router.push('/');
       return;
     }
-  }, [isSignedIn, router]);
+  }, [mounted, isSignedIn, router]);
 
   // Load user's tickets from Supabase
   useEffect(() => {
-    if (clerkUserId) {
+    if (mounted && clerkUserId) {
       loadUserTickets();
     }
-  }, [clerkUserId, toast]);
+  }, [mounted, clerkUserId, toast]);
 
   // Subscribe to real-time ticket updates (simplified for server-side approach)
   useEffect(() => {
-    if (!clerkUserId) return;
+    if (!mounted || !clerkUserId) return;
 
     console.log('🔄 Setting up periodic refresh for user tickets...');
     
@@ -101,7 +107,7 @@ export default function TicketDashboard() {
     return () => {
       clearInterval(interval);
     };
-  }, [clerkUserId]);
+  }, [mounted, clerkUserId]);
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('en-US', {
@@ -193,6 +199,24 @@ export default function TicketDashboard() {
       });
     }
   };
+
+  // Prevent hydration mismatch by not rendering until mounted
+  if (!mounted) {
+    return (
+      <main className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-neutral-950 dark:to-neutral-900">
+        <Header />
+        <div className="pt-20 pb-16 lg:pt-28 lg:pb-24">
+          <div className="container mx-auto px-6 lg:px-8">
+            <div className="text-center">
+              <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-[#142257] mx-auto"></div>
+              <p className="mt-4 text-lg text-muted-foreground">Loading...</p>
+            </div>
+          </div>
+        </div>
+        <Footer />
+      </main>
+    );
+  }
 
   if (!isSignedIn) {
     return null; // Will redirect in useEffect
