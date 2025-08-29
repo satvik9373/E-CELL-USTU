@@ -102,7 +102,7 @@ export default function DashboardLayoutClient({
               <div className="relative">
                 <div className="w-8 h-8 flex items-center justify-center transition-transform group-hover:scale-105">
                   <Image
-                    src="/Images/e-cell-logo.jpeg"
+                    src="/website-images/e-cell-logo.png"
                     alt="E-Cell USTU Logo"
                     width={32}
                     height={32}
@@ -111,7 +111,7 @@ export default function DashboardLayoutClient({
                   />
                 </div>
               </div>
-              <span className="font-semibold text-foreground">E-Cell Dashboard</span>
+              <span className="font-semibold text-foreground">Dashboard</span>
             </Link>
           </div>
 

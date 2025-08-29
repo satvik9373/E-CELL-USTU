@@ -1,0 +1,88 @@
+/* Roadmap Component Styles */
+
+/* Smooth curved dotted path for horizontal layout */
+.roadmap-curved-path {
+  position: relative;
+  height: 2px;
+}
+
+.roadmap-curved-path::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: repeating-linear-gradient(
+    to right,
+    #444444 0px,
+    #444444 8px,
+    transparent 8px,
+    transparent 16px
+  );
+  border-radius: 1px;
+}
+
+/* Curved path using SVG for more advanced curves */
+.roadmap-svg-path {
+  overflow: visible;
+}
+
+.roadmap-svg-path path {
+  fill: none;
+  stroke: #444444;
+  stroke-width: 2;
+  stroke-dasharray: 8, 8;
+  stroke-linecap: round;
+}
+
+/* Animation for the dotted lines (optional) */
+.roadmap-animated-dots {
+  animation: roadmap-flow 3s linear infinite;
+}
+
+@keyframes roadmap-flow {
+  0% {
+    stroke-dashoffset: 0;
+  }
+  100% {
+    stroke-dashoffset: 16;
+  }
+}
+
+/* Hover effects for roadmap items */
+.roadmap-item {
+  transition: transform 0.2s ease-in-out;
+}
+
+.roadmap-item:hover {
+  transform: translateY(-2px);
+}
+
+.roadmap-item-image {
+  transition: all 0.2s ease-in-out;
+}
+
+.roadmap-item:hover .roadmap-item-image {
+  border-color: #BBBBBB;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .roadmap-horizontal {
+    flex-direction: column;
+    gap: 2rem;
+  }
+  
+  .roadmap-horizontal .roadmap-connector {
+    width: 2px;
+    height: 2rem;
+    background: repeating-linear-gradient(
+      to bottom,
+      #444444 0px,
+      #444444 8px,
+      transparent 8px,
+      transparent 16px
+    );
+  }
+}

@@ -58,7 +58,7 @@ export default function Footer() {
               <Link href="/" className="flex items-center space-x-3 group mb-6">
                 <div className="w-12 h-12 relative">
                   <Image
-                    src="/Images/e-cell-logo.jpeg"
+                    src="/website-images/e-cell-logo.png"
                     alt="E-Cell USTU"
                     fill
                     className="object-contain"

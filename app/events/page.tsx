@@ -5,6 +5,7 @@ import Header from '@/components/layout/header';
 import Footer from '@/components/layout/footer';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { ArrowRight } from 'lucide-react';
 import { useAuth, useClerk } from '@clerk/nextjs';
 import { useToast } from '@/hooks/use-toast';
@@ -21,7 +22,6 @@ type EventWithBookingStatus = {
 
 export default function EventsPage() {
   const [events, setEvents] = useState<EventWithBookingStatus[]>([]);
-  const [loading, setLoading] = useState(true);
   const [mounted, setMounted] = useState(false);
   const [bookingEventId, setBookingEventId] = useState<string | null>(null);
   const { isSignedIn, userId: clerkUserId } = useAuth();
@@ -156,8 +156,6 @@ export default function EventsPage() {
           title: "Error",
           description: "Failed to load events. Please try again.",
         });
-      } finally {
-        setLoading(false);
       }
     }
 
@@ -328,23 +326,6 @@ export default function EventsPage() {
     }
   };
 
-  if (loading) {
-    return (
-      <main className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-neutral-950 dark:to-neutral-900">
-        <Header />
-        <div className="pt-20 pb-16 lg:pt-28 lg:pb-24">
-          <div className="container mx-auto px-6 lg:px-8">
-            <div className="text-center">
-              <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-[#142257] mx-auto"></div>
-              <p className="mt-4 text-lg text-muted-foreground">Loading events...</p>
-            </div>
-          </div>
-        </div>
-        <Footer />
-      </main>
-    );
-  }
-
   return (
     <main className="min-h-screen">
       <Header />
@@ -402,61 +383,69 @@ export default function EventsPage() {
               </Button>
             </div>
           ) : (
-            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
               {events.map((event) => (
-                <div
-                  key={event.id}
-                  className="group bg-card border border-border rounded-xl overflow-hidden shadow-sm hover:shadow-lg transition-all duration-300 hover:-translate-y-1"
-                >
-                  {/* Event Image */}
-                  {event.image_url && (
-                    <div className="aspect-video overflow-hidden">
-                      <img
-                        src={event.image_url}
-                        alt="Event"
-                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                      />
-                    </div>
-                  )}
+                <Card key={event.id} className="overflow-hidden hover:shadow-lg transition-shadow">
+                  <CardContent className="p-4">
+                    {/* Event Image */}
+                    {event.image_url && (
+                      <div className="w-full h-40 mb-4">
+                        <img
+                          src={event.image_url}
+                          alt="Event"
+                          className="w-full h-full object-contain"
+                        />
+                      </div>
+                    )}
 
-                  <div className="p-6">
-                    {/* Booking Button */}
-                    <div className="flex flex-col gap-2">
-                      {event.user_has_ticket ? (
-                        <Button
-                          disabled
-                          className="w-full bg-green-600 hover:bg-green-600"
-                        >
-                          ✓ Ticket Booked
-                        </Button>
-                      ) : (
-                        <Button
-                          onClick={() => handleBookEvent(event)}
-                          disabled={bookingEventId === event.id}
-                          className="w-full group-hover:bg-primary/90 transition-colors"
-                        >
-                          {bookingEventId === event.id ? (
-                            <div className="flex items-center">
-                              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                              Booking...
-                            </div>
-                          ) : (
-                            <>
-                              Book Free Ticket
-                              <ArrowRight className="ml-2 h-4 w-4" />
-                            </>
-                          )}
-                        </Button>
-                      )}
+                    {/* Content Grid */}
+                    <div className="grid grid-cols-2 gap-4 items-center">
+                      {/* Left: Button */}
+                      <div className="flex justify-start">
+                        {event.user_has_ticket ? (
+                          <Button
+                            disabled
+                            size="sm"
+                            className="bg-green-600 hover:bg-green-600 rounded-full px-3 py-1 text-xs"
+                          >
+                            ✓ Booked
+                          </Button>
+                        ) : (
+                          <Button
+                            onClick={() => handleBookEvent(event)}
+                            disabled={bookingEventId === event.id}
+                            size="sm"
+                            className="rounded-full px-3 py-1 text-xs"
+                          >
+                            {bookingEventId === event.id ? (
+                              <div className="flex items-center">
+                                <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-white mr-1"></div>
+                                Booking...
+                              </div>
+                            ) : (
+                              "Book Ticket"
+                            )}
+                          </Button>
+                        )}
+                      </div>
                       
-                      {mounted && !isSignedIn && (
-                        <p className="text-xs text-muted-foreground text-center">
-                          Sign in required to book tickets
-                        </p>
-                      )}
+                      {/* Right: E-Cell Logo */}
+                      <div className="flex justify-end">
+                        <img
+                          src="/website-images/e-cell-logo.png"
+                          alt="E-Cell Logo"
+                          className="h-6 w-6 object-contain"
+                        />
+                      </div>
                     </div>
-                  </div>
-                </div>
+                    
+                    {mounted && !isSignedIn && (
+                      <p className="text-xs text-muted-foreground text-center mt-2">
+                        Sign in required to book tickets
+                      </p>
+                    )}
+                  </CardContent>
+                </Card>
               ))}
             </div>
           )}

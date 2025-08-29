@@ -12,7 +12,7 @@ const teamMembers = [
     id: 1,
     name: 'Pradyut',
     role: 'President',
-    image: '/Images/Pradyut.png',
+    image: '/website-images/pradyut.png',
     social: {
       linkedin: 'https://www.linkedin.com/in/prxdyut/',
       email: 'daspradyut516@gmail.com'
@@ -22,7 +22,7 @@ const teamMembers = [
     id: 2,
     name: 'Satvik',
     role: 'Secretary',
-    image: '/Images/Satvik.png',
+    image: '/website-images/satvik.png',
     social: {
       linkedin: 'https://www.linkedin.com/in/satviik',
       email: 'satvikchaturvedi8989@gmail.com'
@@ -32,7 +32,7 @@ const teamMembers = [
     id: 3,
     name: 'Aarush',
     role: 'Technical Head',
-    image: '/Images/Aarush.png',
+    image: '/website-images/aarush.png',
     social: {
       linkedin: 'https://www.linkedin.com/in/aarush-yadav-59868b32a?utm_source=share&utm_campaign=share_via&utm_content=profile&utm_medium=android_app',
       email: 'aarushdineshyadav@gmail.com'
@@ -42,7 +42,7 @@ const teamMembers = [
     id: 4,
     name: 'Pratham',
     role: 'Media Head',
-    image: '/Images/Pratham.png',
+    image: '/website-images/pratham.png',
     social: {
       linkedin: 'http://www.linkedin.com/in/pratham-kulkarni-a68870326',
       email: 'shlokkulkarni06@hmail.com'
@@ -50,39 +50,29 @@ const teamMembers = [
   },
   {
     id: 5,
-    name: 'Sowptick',
-    role: 'Creative Head',
-    image: '/Images/Sowptick.png',
-    social: {
-      linkedin: 'https://www.linkedin.com/in/sowptick-debnath-368541275?utm_source=share&utm_campaign=share_via&utm_content=profile&utm_medium=android_app',
-      email: 'sowptick02@gmail.com'
-    }
-  },
-  {
-    id: 6,
     name: 'Divyanshu',
     role: 'Design Head',
-    image: '/Images/Divyanshu.png',
+    image: '/website-images/divyanshu.png',
     social: {
       linkedin: 'https://www.linkedin.com/in/divyanshu-upadhyay-190ab4324?utm_source=share&utm_campaign=share_via&utm_content=profile&utm_medium=android_app',
       email: 'divyanshu51015@gmail.com'
     }
   },
   {
-    id: 7,
+    id: 6,
     name: 'Rohan',
     role: 'Overall Coordinator',
-    image: '/Images/Rohan.png',
+    image: '/website-images/rohan.png',
     social: {
       linkedin: 'https://www.linkedin.com/in/rohan-ram-prasad?utm_source=share&utm_campaign=share_via&utm_content=profile&utm_medium=android_app',
       email: 'rohan.prasad@ustu.edu.in'
     }
   },
   {
-    id: 8,
+    id: 7,
     name: 'Swara',
     role: 'Operations Head',
-    image: '/Images/Swara.png',
+    image: '/website-images/swara.png',
     social: {
       linkedin: 'https://www.linkedin.com/in/swara-lakade%E2%9C%A8-4ba941337?utm_source=share&utm_campaign=share_via&utm_content=profile&utm_medium=android_app',
       email: 'swara.lakade@gmail.com'
@@ -193,7 +183,7 @@ export default function TeamSection() {
           </p>
           <div className="flex flex-col sm:flex-row gap-3 justify-center">
             <Button asChild>
-              <Link href="/sponsors">
+              <Link href="/sponsorship">
                 Explore More
                 <ArrowRight className="h-4 w-4 ml-2" />
               </Link>

@@ -19,7 +19,7 @@ const navigation = [
 export default function Header() {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const [shouldShowGetPasses, setShouldShowGetPasses] = useState(false);
+  const [shouldShowLogin, setShouldShowLogin] = useState(false);
   const router = useRouter();
   const { isSignedIn, isLoaded } = useAuth();
 
@@ -37,7 +37,7 @@ export default function Header() {
     if (isLoaded) {
       // Small delay to ensure state is fully updated after sign out
       const timer = setTimeout(() => {
-        setShouldShowGetPasses(!isSignedIn);
+        setShouldShowLogin(!isSignedIn);
       }, 100);
       
       return () => clearTimeout(timer);
@@ -60,7 +60,7 @@ export default function Header() {
             <div className="relative">
               <div className="w-10 h-10 lg:w-12 lg:h-12 flex items-center justify-center transition-transform group-hover:scale-105">
                 <Image
-                  src="/Images/e-cell-logo.jpeg"
+                  src="/website-images/e-cell-logo.png"
                   alt="E-Cell USTU Logo"
                   width={42}
                   height={42}
@@ -87,10 +87,6 @@ export default function Header() {
 
           {/* CTA Buttons */}
           <div className="hidden lg:flex items-center space-x-4">
-            <Button variant="outline" size="sm" asChild>
-              <Link href="/summit">Summit 2024</Link>
-            </Button>
-            
             {/* Show Dashboard button when signed in */}
             {isLoaded && isSignedIn && (
               <Button variant="outline" size="sm" asChild>
@@ -98,13 +94,13 @@ export default function Header() {
               </Button>
             )}
             
-            {/* Show Get Passes button only when signed out */}
-            {shouldShowGetPasses && (
+            {/* Show Login button only when signed out */}
+            {shouldShowLogin && (
               <Button 
                 size="sm" 
                 onClick={() => router.push('/sign-in')}
               >
-                Get Passes
+                Login
               </Button>
             )}
             
@@ -145,13 +141,6 @@ export default function Header() {
                 );
               })}
               <div className="pt-4 border-t space-y-2">
-                <Button variant="outline" className="w-full justify-start" asChild>
-                  <Link href="/summit" onClick={() => setIsMobileMenuOpen(false)}>
-                    <Calendar className="h-4 w-4 mr-2" />
-                    Summit 2024
-                  </Link>
-                </Button>
-                
                 {/* Mobile Dashboard button - only when signed in */}
                 {isLoaded && isSignedIn && (
                   <Button variant="outline" className="w-full justify-start" asChild>
@@ -162,8 +151,8 @@ export default function Header() {
                   </Button>
                 )}
                 
-                {/* Mobile Get Passes button - only when signed out */}
-                {shouldShowGetPasses && (
+                {/* Mobile Login button - only when signed out */}
+                {shouldShowLogin && (
                   <Button 
                     className="w-full justify-start" 
                     onClick={() => {
@@ -171,7 +160,7 @@ export default function Header() {
                       router.push('/sign-in');
                     }}
                   >
-                    Get Passes
+                    Login
                   </Button>
                 )}
                 

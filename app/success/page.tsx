@@ -9,6 +9,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { CheckCircle, Download, Calendar, Clock, MapPin, ArrowLeft } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { useUser } from '@clerk/nextjs';
+import confetti from 'canvas-confetti';
 
 interface EventData {
   id: string;
@@ -19,10 +21,61 @@ interface EventData {
 }
 
 export default function SuccessPage() {
-  const [eventData, setEventData] = useState<EventData | null>(null);
-  const [isDownloading, setIsDownloading] = useState(false);
   const router = useRouter();
   const { toast } = useToast();
+  const { user } = useUser();
+  const [eventData, setEventData] = useState<EventData | null>(null);
+  const [isDownloading, setIsDownloading] = useState(false);
+
+  useEffect(() => {
+    // Trigger party popper animation
+    const triggerConfetti = () => {
+      const count = 200;
+      const defaults = {
+        origin: { y: 0.7 }
+      };
+
+      function fire(particleRatio: number, opts: any) {
+        confetti({
+          ...defaults,
+          ...opts,
+          particleCount: Math.floor(count * particleRatio)
+        });
+      }
+
+      fire(0.25, {
+        spread: 26,
+        startVelocity: 55,
+      });
+
+      fire(0.2, {
+        spread: 60,
+      });
+
+      fire(0.35, {
+        spread: 100,
+        decay: 0.91,
+        scalar: 0.8
+      });
+
+      fire(0.1, {
+        spread: 120,
+        startVelocity: 25,
+        decay: 0.92,
+        scalar: 1.2
+      });
+
+      fire(0.1, {
+        spread: 120,
+        startVelocity: 45,
+      });
+    };
+
+    // Trigger confetti after a short delay
+    const timer = setTimeout(triggerConfetti, 500);
+
+    return () => clearTimeout(timer);
+  }, []);
 
   useEffect(() => {
     // Get event data from session storage
@@ -107,24 +160,26 @@ export default function SuccessPage() {
               text-align: center;
               border: 2px dashed #dee2e6;
             }
-            .qr-placeholder {
-              width: 150px;
-              height: 150px;
-              background: #f8f9fa;
-              border: 2px dashed #dee2e6;
-              border-radius: 8px;
-              margin: 20px auto;
-              display: flex;
-              align-items: center;
-              justify-content: center;
-              font-size: 14px;
-              color: #666;
-            }
             .footer {
-              text-align: center;
               margin-top: 30px;
+              padding-top: 20px;
+              border-top: 2px solid #eee;
+              text-align: center;
               color: #666;
               font-size: 14px;
+            }
+            .attendee-info {
+              background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+              padding: 20px;
+              margin: 20px 0;
+              border-radius: 8px;
+              border-left: 4px solid #142257;
+            }
+            .attendee-title {
+              font-size: 18px;
+              font-weight: bold;
+              color: #142257;
+              margin-bottom: 10px;
             }
             @media print {
               body { background: white; }
@@ -136,10 +191,22 @@ export default function SuccessPage() {
           <div class="ticket">
             <div class="ticket-header">
               <div class="event-title">${event.title}</div>
-              <div class="event-subtitle">E-Cell USTU Event Ticket</div>
+              <div class="event-subtitle">E-CELL USTU Official Event</div>
             </div>
             
             <div class="ticket-body">
+              <div class="attendee-info">
+                <div class="attendee-title">👤 Attendee Information</div>
+                <div class="detail-row">
+                  <span class="detail-label">Name:</span>
+                  <span class="detail-value">${user?.fullName || user?.firstName + ' ' + user?.lastName || 'Guest'}</span>
+                </div>
+                <div class="detail-row">
+                  <span class="detail-label">Email:</span>
+                  <span class="detail-value">${user?.emailAddresses?.[0]?.emailAddress || 'Not provided'}</span>
+                </div>
+              </div>
+              
               <div class="detail-row">
                 <span class="detail-label">📅 Date:</span>
                 <span class="detail-value">${new Date(event.date).toLocaleDateString('en-US', {
@@ -159,22 +226,17 @@ export default function SuccessPage() {
               
               <div class="detail-row">
                 <span class="detail-label">📍 Venue:</span>
-                <span class="detail-value">${event.venue || 'Venue TBA'}</span>
+                <span class="detail-value">USTU Campus</span>
               </div>
               
               <div class="ticket-id">
                 <strong>Ticket ID:</strong> ${event.ticketId}
               </div>
               
-              <div class="qr-placeholder">
-                QR Code
-                <br/>
-                (${event.ticketId.slice(0, 8)})
-              </div>
-              
               <div class="footer">
                 <p><strong>Important:</strong> Please bring this ticket to the event venue.</p>
-                <p>For questions, contact: events@ecustu.com</p>
+                <p><strong>Contact:</strong> ecell@ustu.edu.bd | +880 1234-567890</p>
+                <p><strong>E-CELL USTU</strong> - Universal Skilltech University</p>
                 <p>Generated on ${new Date().toLocaleDateString()}</p>
               </div>
             </div>
@@ -273,6 +335,47 @@ export default function SuccessPage() {
               </p>
             </div>
 
+            {/* Ticket Preview */}
+            <div className="mb-8">
+              <Card className="p-6 bg-gradient-to-r from-blue-50 to-indigo-50 border-blue-200">
+                <div className="flex flex-col items-center">
+                  <div className="w-full max-w-md bg-white rounded-lg shadow-lg p-6 border-2 border-dashed border-blue-300">
+                    <div className="text-center">
+                      <div className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white p-4 rounded-t-lg -mx-6 -mt-6 mb-4">
+                        <h3 className="font-bold text-lg">{eventData.title}</h3>
+                        <p className="text-blue-100 text-sm">E-CELL USTU Official Event</p>
+                      </div>
+                      
+                      <div className="space-y-2 text-sm">
+                        <div className="flex justify-between">
+                          <span className="text-gray-600">📅 Date:</span>
+                          <span className="font-medium">{formatDate(eventData.date)}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-gray-600">🕒 Time:</span>
+                          <span className="font-medium">{formatTime(eventData.date)}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-gray-600">📍 Venue:</span>
+                          <span className="font-medium">USTU Campus</span>
+                        </div>
+                      </div>
+                      
+                      <div className="mt-4 p-3 bg-gray-50 rounded border-2 border-dashed border-gray-300">
+                        <p className="text-xs text-gray-600 font-mono">
+                          Ticket ID: {eventData.ticketId}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <p className="mt-4 text-sm text-muted-foreground">
+                    ↑ Preview of your ticket
+                  </p>
+                </div>
+              </Card>
+            </div>
+
             {/* Event Details Card */}
             <Card className="mb-8 text-left">
               <CardHeader>
@@ -301,7 +404,7 @@ export default function SuccessPage() {
                   
                   <div className="flex items-center text-muted-foreground">
                     <MapPin className="h-5 w-5 mr-3 text-primary" />
-                    <span>{eventData.venue || 'Venue TBA'}</span>
+                    <span>USTU Campus</span>
                   </div>
                 </div>
                 
